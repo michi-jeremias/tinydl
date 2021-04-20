@@ -27,6 +27,11 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Model with sanity check
 class RNN(nn.Module):
+    """ Creates an RNN.
+    Inputs are data and a hidden state.
+    Outputs are classes and a hidden state.
+    """
+
     def __init__(self, input_size, hidden_size, num_layers, num_classes):
         super(RNN, self).__init__()
         self.hidden_size = hidden_size
@@ -115,15 +120,16 @@ def check_accuracy(loader, model):
         print('Checking test accuracy')
 
     model.eval()
-    for data, targets in loader:
-        data = data.to(device)
-        data = data.squeeze(1)
-        targets = targets.to(device)
+    with torch.no_grad():
+        for data, targets in loader:
+            data = data.to(device)
+            data = data.squeeze(1)
+            targets = targets.to(device)
 
-        scores = model(data)
-        maxvalue, maxindex = scores.max(1)
-        num_correct += int((maxindex == targets).sum())
-        num_samples += scores.shape[0]
+            scores = model(data)
+            maxvalue, maxindex = scores.max(1)
+            num_correct += int((maxindex == targets).sum())
+            num_samples += scores.shape[0]
 
     accuracy = num_correct / num_samples
     model.train()
