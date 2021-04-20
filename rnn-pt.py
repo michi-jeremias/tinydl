@@ -2,12 +2,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 import torchvision
+import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-import torchvision.datasets as datasets
-import torch.optim as optim
 
+from timefunc import timefunc
 
 # Hyperparameters
 # Images with 28x28 pixels, number of featuers foreach time step is 28
@@ -48,9 +49,9 @@ class RNN(nn.Module):
         return out
 
 
-x = torch.randn(batch_size, 28, 28)
+x = torch.randn(batch_size, 28, 28).to(device)
 model = RNN(input_size=input_size, hidden_size=hidden_size,
-            num_layers=num_layers, num_classes=num_layers)
+            num_layers=num_layers, num_classes=num_layers).to(device)
 x.shape
 
 model(x).shape
@@ -76,6 +77,7 @@ optimizer = optim.Adam(params=model.parameters(), lr=learning_rate)
 
 
 # Train
+@timefunc
 def train():
     model.train()
     for epoch in range(num_epochs):
@@ -103,6 +105,7 @@ train()
 
 
 # Evaluate
+@timefunc
 def check_accuracy(loader, model):
     num_correct = 0
     num_samples = 0
@@ -123,9 +126,7 @@ def check_accuracy(loader, model):
         num_samples += scores.shape[0]
 
     accuracy = num_correct / num_samples
-
     model.train()
-
     print(f'Accuracy [{num_correct}/{num_samples}]: {accuracy * 100:.2f}')
 
 

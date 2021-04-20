@@ -4,8 +4,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.datasets as datasets
-from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
+from timefunc import timefunc
 
 
 # Create CNN
@@ -67,6 +69,7 @@ optimizer = optim.Adam(params=model.parameters(), lr=learning_rate)
 
 
 # Train network
+@timefunc
 def train():
     for epoch in range(num_epochs):
         print(f'Training epoch {epoch + 1}/{num_epochs}')
