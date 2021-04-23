@@ -2,6 +2,16 @@ import torch
 from torch.nn.modules.activation import ReLU
 import torchvision
 import torch.nn as nn
+import torch.optim as optim
+
+# Hyperparameters
+num_epochs = 20
+learning_rate = 1e-2
+batch_size = 256
+momentum = 0.9
+dropout = 0.5
+weight_decay = 1e-4
+
 
 architectures = {
     'A': [64, 'm', 128, 'm', 256, 256, 'm', 512, 512, 'm', 512, 512, 'm'],
@@ -37,8 +47,10 @@ class VGG(nn.Module):
         self.fully = nn.Sequential(
             nn.Linear(in_features=7 * 7 * 512, out_features=4096),
             nn.ReLU(),
+            # nn.Dropout(p=dropout),
             nn.Linear(in_features=4096, out_features=4096),
             nn.ReLU(),
+            # nn.Dropout(p=dropout),
             nn.Linear(in_features=4096, out_features=10)
         )
 
@@ -70,4 +82,9 @@ class VGG(nn.Module):
 # Initialize model
 model = VGG(vgg_architecure=architectures['A'], num_channels=3, num_classes=10)
 x_trial = torch.randn(1, 3, 224, 224)
-print(model(x_trial)).shape  # [1, 10]
+print(model(x_trial).shape)  # [1, 10]
+
+# Loss, optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(params=model.parameters(),
+                      lr=learning_rate, weight_decay=weight_decay)
