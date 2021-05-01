@@ -82,8 +82,8 @@ optimizer = optim.Adam(params=model.parameters(), lr=learning_rate)
 
 # Tensorboard writer
 # CTRL-SHIFT-ö to open terminal
-# tensorboard --logdir ../tensorboard/logs
-TBPATH = '../tensorboard/logs'
+# tensorboard --logdir ../logs/tensorboard
+TBPATH = '../logs/tensorboard'
 writer = SummaryWriter(log_dir=f'{TBPATH}/MNIST')
 
 

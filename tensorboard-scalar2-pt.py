@@ -1,4 +1,5 @@
-"""26-04-2021
+"""
+Created: 26-04-2021
 Example of a simple (and not so correct) hyperparameter search
 with tensorboard. Custom CNN on MNIST data.
 """
@@ -98,6 +99,7 @@ def train(model, optimizer, loader, writer):
     print('Start training')
 
     for epoch in range(num_epochs):
+
         for data, target in loader:
             data = data.to(device=device)
             target = target.to(device=device)
@@ -116,11 +118,14 @@ def train(model, optimizer, loader, writer):
             # Tensorboard
             _, label = score.max(1)
             batch_accuracy = 100 * (label == target).sum() / data.shape[0]
-            # writer.add_scalar('Training loss', scalar_value=loss)
-            # writer.add_scalar('Batch accuracy', scalar_value=batch_accuracy)
+            writer.add_scalar(
+                'Training loss', scalar_value=loss, global_step=tb_step)
+            writer.add_scalar('Batch accuracy',
+                              scalar_value=batch_accuracy, global_step=tb_step)
 
             tb_step += 1
         print(f'Epoch [{epoch+1}/{num_epochs}] - loss: {loss:.2f}')
+    print('Finished training')
 
 
 @timefunc
