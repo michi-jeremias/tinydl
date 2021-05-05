@@ -24,7 +24,7 @@ num_hidden = 256
 z_dim = 100
 
 
-# Models
+# Models (with BN)
 class Discriminator(nn.Module):
 
     def __init__(self, img_dim, num_hidden):
