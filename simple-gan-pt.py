@@ -52,7 +52,7 @@ class Generator(nn.Module):
 # Hyperparameters
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 DATAPATH = '../data'
-num_epochs = 50
+num_epochs = 20
 learning_rate = 3e-4    # Best lr for use with Adam
 batch_size = 32
 z_dim = 64              # 32, 128, 256, ...
@@ -69,11 +69,11 @@ mnist_mean = 0.1307
 mnist_std = 0.3081
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean=(0.5,), std=(0.5,))
+    transforms.Normalize(mean=(mnist_mean,), std=(mnist_std,))
 ])
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean=(mnist_mean,), std=(mnist_std,))
+    transforms.Normalize(mean=(0.5,), std=(0.5,))
 ])
 
 
@@ -107,7 +107,7 @@ def train():
             #                            disc_real       disc_fake
             # Discriminator returns a value between (0., 1.)
             noise = torch.randn(batch_size, z_dim).to(device=device)
-            fake_img = gen(fixed_noise)
+            fake_img = gen(noise)
             disc_real = disc(real_img).view(-1)
             loss_disc_real = criterion(disc_real, torch.ones_like(disc_real))
             disc_fake = disc(fake_img).view(-1)

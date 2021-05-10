@@ -1,4 +1,11 @@
-"""03-05-2021 Simple GAN #2"""
+"""03-05-2021 Simple GAN #2.
+Replaced the Tanh() with a Sigmoid() compared with simple-gan
+and removed the normalization with mean 0.5 and std 0.5.
+The normalization makes the data centered (roughly) around 0, therefore
+the generator has to be able to output negative values, which the Tanh
+does.
+Without the normalization the Tanh is not necessary anymore.
+"""
 
 # Imports
 import torch
@@ -20,8 +27,8 @@ TBLOGPATH = '../logs/tensorboard/simple-gan-2/MNIST/simple-gan-2'
 batch_size = 64
 learning_rate = 3e-4
 num_epochs = 20
-num_hidden = 256
-z_dim = 100
+num_hidden = 128
+z_dim = 64
 
 
 # Models (with BN)
@@ -33,8 +40,7 @@ class Discriminator(nn.Module):
         self.num_hidden = num_hidden
         self.net = nn.Sequential(
             nn.Linear(in_features=self.img_dim, out_features=self.num_hidden),
-            nn.LeakyReLU(0.2),
-            nn.BatchNorm1d(num_features=self.num_hidden),
+            nn.LeakyReLU(0.1),
             nn.Linear(in_features=self.num_hidden, out_features=1),
             nn.Sigmoid()
         )
@@ -52,8 +58,7 @@ class Generator(nn.Module):
         self.z_dim = z_dim
         self.net = nn.Sequential(
             nn.Linear(self.z_dim, self.num_hidden),
-            nn.LeakyReLU(0.2),
-            nn.BatchNorm1d(self.num_hidden),
+            nn.LeakyReLU(0.1),
             nn.Linear(self.num_hidden, self.img_dim),
             nn.Sigmoid()
         )
@@ -62,24 +67,22 @@ class Generator(nn.Module):
         return self.net(x)
 
 
-modelG = Generator(img_dim=28 * 28, num_hidden=num_hidden, z_dim=z_dim)
-modelG = modelG.to(device)
-modelD = Discriminator(img_dim=28 * 28, num_hidden=num_hidden)
-modelD = modelD.to(device)
+D = Discriminator(img_dim=28 * 28, num_hidden=128).to(device)
+G = Generator(img_dim=28 * 28, num_hidden=256, z_dim=64).to(device)
 
 
 # Data
-transform = transforms.Compose([transforms.ToTensor()])
+transform = transforms.ToTensor()
 train_dataset = datasets.MNIST(
-    root=DATAPATH, train=True, transform=transform, download=True)
+    root=DATAPATH, transform=transform, download=True)
 train_loader = DataLoader(dataset=train_dataset,
                           batch_size=batch_size, shuffle=True)
 
 
 # Loss
 criterion = nn.BCELoss()
-optimizerG = optim.Adam(params=modelG.parameters(), lr=learning_rate)
-optimizerD = optim.Adam(params=modelD.parameters(), lr=learning_rate)
+optimizerD = optim.Adam(params=D.parameters(), lr=learning_rate)
+optimizerG = optim.Adam(params=G.parameters(), lr=learning_rate)
 
 
 # Tensorboard
@@ -91,25 +94,26 @@ writer_real = SummaryWriter(log_dir=f'{TBLOGPATH}/real')
 # Train
 def train():
     tb_step = 0
+    D.train()
+    G.train()
+    print('Start training.')
+
     for epoch in range(num_epochs):
-        modelD.train()
-        modelG.train()
-        print('Start training.')
 
         for batch_idx, (real_data, _) in enumerate(train_loader):
             current_batch_size = real_data.shape[0]
             latent_noise = torch.randn(current_batch_size, z_dim).to(device)
             real_data = real_data.reshape(current_batch_size, -1).to(device)
+            fake_data = G(latent_noise).to(device)
 
-            fake_data = modelG(latent_noise).to(device)
             # Forward and loss for the discriminator
-            D_fake = modelD(fake_data)
-            D_real = modelD(real_data)
-            ones = torch.ones_like(D_real).to(device)
-            zeros = torch.zeros_like(D_fake).to(device)
-            D_loss_fake = criterion(D_fake, zeros)
-            D_loss_real = criterion(D_real, ones)
-            D_loss = D_loss_fake + D_loss_real
+            scores_fake = D(fake_data)
+            scores_real = D(real_data)
+            ones = torch.ones_like(scores_real).to(device)
+            zeros = torch.zeros_like(scores_fake).to(device)
+            D_loss_fake = criterion(scores_fake, zeros)
+            D_loss_real = criterion(scores_real, ones)
+            D_loss = (D_loss_fake + D_loss_real)
 
             # Backward and step discriminator
             optimizerD.zero_grad()
@@ -117,8 +121,9 @@ def train():
             optimizerD.step()
 
             # Forward and loss for the generator
-            G_fake = modelG(latent_noise)
-            G_loss = criterion(G_fake, zeros)
+            scores_fake_updated = D(fake_data)
+            G_loss = criterion(scores_fake_updated,
+                               torch.ones_like(scores_fake_updated))
 
             # Backwand and step generator
             optimizerG.zero_grad()
@@ -127,12 +132,13 @@ def train():
 
             # Tensorboard
             if batch_idx == 0:
+
                 print(
-                    f'Epoch [{epoch+1}/{num_epochs}]'
-                    f'D Loss: {D_loss}\tG Loss: {G_loss}')
+                    f'Epoch [{epoch+1}/{num_epochs}]\t'
+                    f'D Loss: {D_loss:.6f}\tG Loss: {G_loss:.6f}')
 
                 with torch.no_grad():
-                    fake_img = modelG(latent_noise).reshape(-1, 1, 28, 28)
+                    fake_img = G(latent_noise).reshape(-1, 1, 28, 28)
                     real_img = real_data.reshape(-1, 1, 28, 28)
                     grid_fake = torchvision.utils.make_grid(
                         fake_img, normalize=True)
@@ -145,6 +151,8 @@ def train():
                         tag='Real Images', img_tensor=grid_real,
                         global_step=tb_step)
                     tb_step += 1
+
+    print('Finished training.')
 
 
 train()
