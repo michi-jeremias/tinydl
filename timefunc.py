@@ -1,3 +1,4 @@
+import shutil
 import time
 import functools
 
@@ -17,3 +18,10 @@ def timefunc(func):
         print(f'Function: {func.__name__}, time: {time_elapsed:.2f}s')
         return result
     return time_closure
+
+
+def del_logs(path):
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError as e:
+        print('Already deleted.')
