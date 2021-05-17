@@ -1,4 +1,5 @@
-"""12-05-2021: DCGAN Implementation for the CIPHAR10 dataset"""
+"""12-05-2021: DCGAN (Deep Convolution GAN) Implementation for the\
+CIPHAR10 dataset"""
 
 # Import
 import torch
@@ -57,7 +58,7 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2),
             nn.BatchNorm2d(num_features=1024),
             nn.Conv2d(in_channels=1024, out_channels=1,
-                      kernel_size=4, stride=2, padding=0, bias=False),
+                      kernel_size=4, stride=2, padding=0),
             nn.Sigmoid()
         )
         self.net.apply(init_weights)
