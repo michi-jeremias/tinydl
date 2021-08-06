@@ -1,3 +1,9 @@
+"""Data loading for the kaggle competition santander customer
+transaction prediction.
+See https://www.kaggle.com/c/santander-customer-transaction-prediction
+"""
+
+
 # Imports
 import pandas as pd
 import torch
@@ -7,22 +13,24 @@ from torch.utils.data.dataset import random_split
 
 
 # Device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # Paths, constants
-DATAPATH = '../../data/santander-customer-transaction-prediction/'
-LOGPATH = '../../logs/santander-customer-transaction-prediction/'
+DATAPATH = 'data/santander-customer-transaction-prediction/'
+LOGPATH = 'logs/santander-customer-transaction-prediction/'
 
 
 # Load data
-def load_data():
+def get_data(device=DEVICE):
     # Read csv data, drop target column (train.csv) and ID_code column
     # (train.csv, test.csv).
     # Split train into train and validation.
-    # Return TensorDatasets for train, val and test.
+    # Return TensorDatasets for train, val and test. Return ID_Code for
+    # the test set.
     train_data = pd.read_csv(DATAPATH + 'train.csv')
-    y_train = torch.tensor(train_data['target'].values, dtype=torch.float32)
+    y_train = torch.tensor(
+        train_data['target'].values, dtype=torch.float32).to(device)
     train_data.drop(['target', 'ID_code'], axis=1, inplace=True)
     X_train = torch.tensor(train_data.values, dtype=torch.float32)
     dataset = TensorDataset(X_train, y_train)
@@ -36,4 +44,4 @@ def load_data():
     X_test = torch.tensor(test_data.values, dtype=torch.float32)
     test_ds = TensorDataset(X_test)
 
-    return train_ds, val_ds, test_ds
+    return train_ds, val_ds, test_ds, test_idcode
