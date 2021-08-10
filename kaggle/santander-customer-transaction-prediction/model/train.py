@@ -1,15 +1,13 @@
 # Imports
 import torch
-from sklearn import metrics
-from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim
-from data import get_data
-# from utils import get_predictions
+from sklearn import metrics
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
-from utils import get_predictions
-
+from data import get_data
+from utils import get_predictions, plot_correlation
 
 # Device
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

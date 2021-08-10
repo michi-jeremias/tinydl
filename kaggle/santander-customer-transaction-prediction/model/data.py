@@ -17,8 +17,8 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # Paths, constants
-DATAPATH = 'data/santander-customer-transaction-prediction/'
-LOGPATH = 'logs/santander-customer-transaction-prediction/'
+DATAPATH = '../data/'
+LOGPATH = '../logs/'
 
 
 # Load data
