@@ -28,7 +28,11 @@ def get_data(device=DEVICE):
     # Split train into train and validation.
     # Return TensorDatasets for train, val and test. Return ID_Code for
     # the test set.
-    train_data = pd.read_csv(DATAPATH + 'train.csv')
+    try:
+        train_data = pd.read_csv(DATAPATH + 'train.csv')
+        print(f'Imported {DATAPATH}train.csv')
+    except FileNotFoundError:
+        print(f'File not found: {DATAPATH}train.csv')
     y_train = torch.tensor(
         train_data['target'].values, dtype=torch.float32).to(device)
     train_data.drop(['target', 'ID_code'], axis=1, inplace=True)
@@ -38,7 +42,12 @@ def get_data(device=DEVICE):
         dataset=dataset,
         lengths=[floor(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
 
-    test_data = pd.read_csv(DATAPATH + 'test.csv')
+    try:
+        test_data = pd.read_csv(DATAPATH + 'test.csv')
+        print(f'Imported {DATAPATH}test.csv')
+    except FileNotFoundError:
+        print(f'File not found: {DATAPATH}test.csv')
+
     test_idcode = test_data['ID_code']
     test_data.drop('ID_code', axis=1, inplace=True)
     X_test = torch.tensor(test_data.values, dtype=torch.float32)

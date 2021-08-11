@@ -7,7 +7,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from data import get_data
-from utils import get_predictions, plot_correlation
+from model import SimpleNet, OneDimNet
+from utils import get_predictions, plot_correlations
 
 # Device
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -20,24 +21,8 @@ NUM_EPOCHS = 20
 WEIGHT_DECAY = 1e-4
 
 
-# Model
-class NN(nn.Module):
-
-    def __init__(self, input_size):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.BatchNorm1d(num_features=input_size),
-            nn.Linear(in_features=input_size, out_features=50, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(in_features=50, out_features=1),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        return self.net(x).view(-1)
-
-
-model = NN(input_size=200).to(DEVICE)
+model = SimpleNet(num_in=200, num_hidden=16).to(DEVICE)
+model = OneDimNet(num_in=200, num_hidden=16).to(DEVICE)
 
 
 # Data

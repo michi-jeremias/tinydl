@@ -26,12 +26,16 @@ def get_predictions(loader, model, device):
 
 
 def plot_correlations(df):
+    # df is a pandas dataframe
     f = plt.figure(figsize=(19, 15))
     plt.matshow(df.corr(), fignum=f.number)
-    plt.xticks(range(df.select_dtypes(['number']).shape[1]), df.select_dtypes(
-        ['number']).columns, fontsize=14, rotation=45)
-    plt.yticks(range(df.select_dtypes(['number']).shape[1]), df.select_dtypes(
-        ['number']).columns, fontsize=14)
+    plt.xticks(
+        ticks=range(0, df.select_dtypes(['number']).shape[1], 10),
+        fontsize=14,
+        rotation=0)
+    plt.yticks(
+        ticks=range(0, df.select_dtypes(['number']).shape[1], 10),
+        fontsize=14)
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=14)
-    plt.title('Correlation Matrix', fontsize=16)
+    plt.title('Correlation Matrix', fontsize=18)
