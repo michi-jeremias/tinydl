@@ -28,11 +28,10 @@ def get_data(device=DEVICE):
     # Split train into train and validation.
     # Return TensorDatasets for train, val and test. Return ID_Code for
     # the test set.
-    try:
-        train_data = pd.read_csv(DATAPATH + 'train.csv')
-        print(f'Imported {DATAPATH}train.csv')
-    except FileNotFoundError:
-        print(f'File not found: {DATAPATH}train.csv')
+
+    # Train and validation set
+    train_data = load_csv(DATAPATH + 'train.csv')
+    train_data = create_isunique(train_data)
     y_train = torch.tensor(
         train_data['target'].values, dtype=torch.float32).to(device)
     train_data.drop(['target', 'ID_code'], axis=1, inplace=True)
@@ -42,15 +41,36 @@ def get_data(device=DEVICE):
         dataset=dataset,
         lengths=[floor(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
 
-    try:
-        test_data = pd.read_csv(DATAPATH + 'test.csv')
-        print(f'Imported {DATAPATH}test.csv')
-    except FileNotFoundError:
-        print(f'File not found: {DATAPATH}test.csv')
-
-    test_idcode = test_data['ID_code']
-    test_data.drop('ID_code', axis=1, inplace=True)
+    # Test set
+    test_data = load_csv(DATAPATH + 'test.csv')
+    test_data = create_isunique(test_data)
     X_test = torch.tensor(test_data.values, dtype=torch.float32)
+    test_idcode = test_data['ID_code']  # ID_code for kaggle submission
+    test_data.drop('ID_code', axis=1, inplace=True)
     test_ds = TensorDataset(X_test)
 
     return train_ds, val_ds, test_ds, test_idcode
+
+
+def load_csv(path):
+    # Try to load .csv into pd.DataFrame
+    try:
+        df = pd.read_csv(path)
+        print(f'Imported {path}')
+        return df
+    except FileNotFoundError:
+        print(f'File not found: {path}')
+
+
+def create_isunique(df):
+    # Creates a column for every column, telling if a value is unique
+    # in that column.
+    col_names = [f'var_{i}' for i in range(200)]
+    for col in col_names:
+        counts = df[col].value_counts()
+        uniques = counts.index[counts == 1]
+        res = pd.DataFrame(df[col].isin(uniques))
+        res.columns = [col + '_unique']
+        df = pd.concat([df, res], axis=1)
+        # df[col + '_unique'] = df[col].isin(uniques)
+    return df
