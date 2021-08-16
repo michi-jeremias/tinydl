@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from data import get_data
-from model import SimpleNet, OneDimNet
+from model import SimpleNet, OneDimNet, TwoDimNet
 from utils import get_predictions, plot_correlations
 
 # Device
@@ -23,6 +23,7 @@ WEIGHT_DECAY = 1e-4
 
 model = SimpleNet(num_in=200, num_hidden=16).to(DEVICE)
 model = OneDimNet(num_in=200, num_hidden=16).to(DEVICE)
+model = TwoDimNet(num_in=200, num_hidden=16).to(DEVICE)
 
 
 # Data

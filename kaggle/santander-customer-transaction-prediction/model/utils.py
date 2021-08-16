@@ -39,3 +39,13 @@ def plot_correlations(df):
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=14)
     plt.title('Correlation Matrix', fontsize=18)
+
+
+def gen_testtensor():
+    """Generates a 4x4 tensor for testing purposes"""
+    return torch.tensor([
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+        [1, 2, 3, 4]
+    ])
