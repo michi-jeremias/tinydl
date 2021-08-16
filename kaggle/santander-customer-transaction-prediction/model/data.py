@@ -32,30 +32,32 @@ def get_data(device=DEVICE):
     # Read pandas dataframes
     try:
         path = DATAPATH + 'train.csv'
-        train_data = pd.read_csv(path)
+        df_train = pd.read_csv(path)
         print(f'Imported {path}')
         path = DATAPATH + 'test.csv'
-        test_data = pd.read_csv(path)
+        df_test = pd.read_csv(path)
         print(f'Imported {path}')
     except FileNotFoundError:
         print(f'File not found: {path}')
 
     # Train and validation set
-    train_data = create_isunique(train_data)
+    df_train = create_isunique(df_train)
     y_train = torch.tensor(
-        train_data['target'].values, dtype=torch.float32).to(device)
-    train_data.drop(['target', 'ID_code'], axis=1, inplace=True)
-    X_train = torch.tensor(train_data.values, dtype=torch.float32)
+        df_train['target'].values, dtype=torch.float32).to(device)
+    df_train.drop(['target', 'ID_code'], axis=1, inplace=True)
+    X_train = torch.tensor(df_train.values, dtype=torch.float32)
     dataset = TensorDataset(X_train, y_train)
+
+    # Split train in train and val
     train_ds, val_ds = random_split(
         dataset=dataset,
         lengths=[floor(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
 
     # Test set
-    test_data = create_isunique(test_data)
-    X_test = torch.tensor(test_data.values, dtype=torch.float32)
-    test_idcode = test_data['ID_code']  # ID_code for kaggle submission
-    test_data.drop('ID_code', axis=1, inplace=True)
+    df_test = create_isunique(df_test)
+    X_test = torch.tensor(df_test.values, dtype=torch.float32)
+    test_idcode = df_test['ID_code']  # ID_code for kaggle submission
+    df_test.drop('ID_code', axis=1, inplace=True)
     test_ds = TensorDataset(X_test)
 
     return train_ds, val_ds, test_ds, test_idcode
