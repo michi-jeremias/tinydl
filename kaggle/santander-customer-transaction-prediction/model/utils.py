@@ -49,3 +49,29 @@ def gen_testtensor():
         [1, 2, 3, 4],
         [1, 2, 3, 4]
     ])
+
+
+def gen_testdf():
+    """Generates a 4x4 dataframe for testing purposes"""
+    return pd.DataFrame([
+        [1, 2, 3, 4],
+        [2, 2, 3, 4],
+        [2, 2, 3, 4],
+        [2, 2, 3, 4]
+    ])
+
+
+colnames = range(4)
+
+
+def check_uniqueness(df):
+    df_unique = pd.DataFrame()
+    for col in colnames:
+        count = df[col].value_counts()
+        is_unique = {f"{col}_u": df[col].isin(count[count == 1]) * 1.}
+        df_res = pd.DataFrame.from_dict(is_unique)
+        df_unique = pd.concat([df_unique, df_res], axis=1)
+
+    df = pd.concat([df, df_unique], axis=1)
+
+    return df_unique, df
