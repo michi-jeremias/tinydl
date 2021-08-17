@@ -82,24 +82,60 @@ def create_isunique(df):
     return df
 
 
-def create_isunique2(df):
-    # Creates a column for every column, telling if a value is unique
-    # in that column.
-    col_names = [f'var_{i}' for i in range(200)]
-    for col in col_names:
-        counts = df[col].value_counts()
-        uniques = counts.index[counts == 1]
-        df[col + '_u'] = df[col].isin(uniques)
-        # df[col + '_unique'] = df[col].isin(uniques)
-    return df
-
-
 def get_colnames():
     return [f'var_{i}' for i in range(200)]
 
 
 def split_real_fake(df):
     # Syntax: df.loc[df[conditional], [selected data]]
-    real_test = df.loc[df["has_unique"], ["ID_code"] + get_colnames()]
-    fake_test = df.loc[~df["has_unique"], ["ID_code"] + get_colnames()]
-    return real_test, fake_test
+    df_test_real = df.loc[df["has_unique"], ["ID_code"] + get_colnames()]
+    df_test_fake = df.loc[~df["has_unique"], ["ID_code"] + get_colnames()]
+    return df_test_real, df_test_fake
+
+
+def gen_unique(df, colnames=None):
+    """Returns if a value in a column of a dataframe is
+    unique (1) or not (0)
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    colnames : List of columns to be checked for unique values
+
+    Returns
+    -------
+    df_is_unique : pandas.DataFrame
+    """
+    df_is_unique = pd.DataFrame()
+
+    if colnames is None:
+        colnames = df.columns
+
+    for col in colnames:
+        count = df[col].value_counts()
+        is_unique = {f"{col}_u": df[col].isin(count.index[count == 1]) * 1.}
+        df_res = pd.DataFrame.from_dict(is_unique)
+        df_is_unique = pd.concat([df_is_unique, df_res], axis=1)
+
+    return df_is_unique
+
+
+def gen_hasunique(df, colnames=None):
+    """Returns if a row has at least one value of True or 1 over
+    the columns in colnames.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    colnames : List of columns to be checked for True values
+
+    Returns
+    -------
+    df_has_unique : pd.DataFrame with a single column of results"""
+    if colnames is None:
+        colnames = df.columns
+
+    has_unique = {"has_unique": df[colnames].any(axis=1) * 1.}
+    df_has_unique = pd.DataFrame.from_dict(has_unique)
+
+    return df_has_unique

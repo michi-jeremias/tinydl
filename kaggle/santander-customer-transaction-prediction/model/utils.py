@@ -52,11 +52,14 @@ def gen_testtensor():
 
 
 def gen_testdf():
-    """Generates a 4x4 dataframe for testing purposes"""
+    """Generates a 4x4 dataframe for testing purposes
+
+    returns
+    """
     return pd.DataFrame([
         [1, 2, 3, 4],
         [2, 2, 3, 4],
-        [2, 2, 3, 4],
+        [2, 2, 3, 5],
         [2, 2, 3, 4]
     ])
 
@@ -64,14 +67,34 @@ def gen_testdf():
 colnames = range(4)
 
 
-def check_uniqueness(df):
-    df_unique = pd.DataFrame()
+def gen_unique(df, colnames=None):
+    """Returns if a value in a column of a dataframe is
+    unique (1) or not (0)
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    colnames : list of columns to be checked for unique values
+
+    Returns
+    -------
+    df_is_unique : pandas.DataFrame
+    """
+    df_is_unique = pd.DataFrame()
+
+    if colnames is None:
+        colnames = df.columns
+
     for col in colnames:
         count = df[col].value_counts()
-        is_unique = {f"{col}_u": df[col].isin(count[count == 1]) * 1.}
+        is_unique = {f"{col}_u": df[col].isin(count.index[count == 1]) * 1.}
         df_res = pd.DataFrame.from_dict(is_unique)
-        df_unique = pd.concat([df_unique, df_res], axis=1)
+        df_is_unique = pd.concat([df_is_unique, df_res], axis=1)
 
-    df = pd.concat([df, df_unique], axis=1)
+    return df_is_unique
 
-    return df_unique, df
+
+def gen_hasunique(df, colnames):
+    """"""
+    has_unique = {"has_unique": df[colnames].any(axis=1)}
+    df_has_unique = pd.DataFrame.from_dict(has_unique)
