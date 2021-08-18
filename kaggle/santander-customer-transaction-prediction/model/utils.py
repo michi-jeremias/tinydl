@@ -26,7 +26,11 @@ def get_predictions(loader, model, device):
 
 
 def plot_correlations(df):
-    # df is a pandas dataframe
+    """Plots correlations of data.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame"""
     f = plt.figure(figsize=(19, 15))
     plt.matshow(df.corr(), fignum=f.number)
     plt.xticks(
@@ -62,39 +66,3 @@ def gen_testdf():
         [2, 2, 3, 5],
         [2, 2, 3, 4]
     ])
-
-
-colnames = range(4)
-
-
-def gen_unique(df, colnames=None):
-    """Returns if a value in a column of a dataframe is
-    unique (1) or not (0)
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-    colnames : list of columns to be checked for unique values
-
-    Returns
-    -------
-    df_is_unique : pandas.DataFrame
-    """
-    df_is_unique = pd.DataFrame()
-
-    if colnames is None:
-        colnames = df.columns
-
-    for col in colnames:
-        count = df[col].value_counts()
-        is_unique = {f"{col}_u": df[col].isin(count.index[count == 1]) * 1.}
-        df_res = pd.DataFrame.from_dict(is_unique)
-        df_is_unique = pd.concat([df_is_unique, df_res], axis=1)
-
-    return df_is_unique
-
-
-def gen_hasunique(df, colnames):
-    """"""
-    has_unique = {"has_unique": df[colnames].any(axis=1)}
-    df_has_unique = pd.DataFrame.from_dict(has_unique)

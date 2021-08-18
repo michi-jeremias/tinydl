@@ -40,60 +40,42 @@ def get_data(device=DEVICE):
     except FileNotFoundError:
         print(f'File not found: {path}')
 
+    colnames = [f'var_{i}' for i in range(200)]
+
     # Train and validation set
-    df_train = create_isunique(df_train)
+    df_train_isunique = gen_isunique(df=df_train, colnames=colnames)
+    df_train_hasunique = gen_hasunique(df=df_train_isunique)
+    df_train = pd.concat(
+        [df_train, df_train_isunique, df_train_hasunique], axis=1)
+
+    # Test set
+    df_test_isunique = gen_isunique(df=df_test, colnames=colnames)
+    df_test_hasunique = gen_hasunique(df=df_test_isunique)
+    df_test = pd.concat([df_test, df_test_isunique, df_test_hasunique], axis=1)
+
+    # Tensordataset, split trainval_ds in train_ds and val_ds
     y_train = torch.tensor(
         df_train['target'].values, dtype=torch.float32).to(device)
     df_train.drop(['target', 'ID_code'], axis=1, inplace=True)
     X_train = torch.tensor(df_train.values, dtype=torch.float32)
-    dataset = TensorDataset(X_train, y_train)
 
-    # Split train in train and val
-    train_ds, val_ds = random_split(
-        dataset=dataset,
-        lengths=[floor(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
+    df_test_real = df_test.loc[df_test['has_unique'] == 1.]
+    df_test_fake = df_test.loc[df_test['has_unique'] != 1.]
 
-    # Test set
-    df_test = create_isunique(df_test)
-    X_test = torch.tensor(df_test.values, dtype=torch.float32)
     test_idcode = df_test['ID_code']  # ID_code for kaggle submission
     df_test.drop('ID_code', axis=1, inplace=True)
+    X_test = torch.tensor(df_test.values, dtype=torch.float32)
+
+    trainval_ds = TensorDataset(X_train, y_train)
+    train_ds, val_ds = random_split(
+        dataset=trainval_ds,
+        lengths=[floor(0.8 * len(trainval_ds)), ceil(0.2 * len(trainval_ds))])
     test_ds = TensorDataset(X_test)
 
     return train_ds, val_ds, test_ds, test_idcode
 
 
-def create_isunique(df):
-    # Creates a column for every column, telling if a value is unique
-    # in that column.
-    col_names = get_colnames()
-    for col in col_names:
-        counts = df[col].value_counts()
-        uniques = counts.index[counts == 1]
-        res = pd.DataFrame(df[col].isin(uniques))
-        res.columns = [col + '_u']
-        df = pd.concat([df, res], axis=1)
-        # df[col + '_unique'] = df[col].isin(uniques)
-
-    # The next line creates the information if an observation contains
-    # a unique value at all. If not, the data is considered to be fake
-    # (generated).
-    df['has_unique'] = df[[col + '_u' for col in col_names]].any(axis=1)
-    return df
-
-
-def get_colnames():
-    return [f'var_{i}' for i in range(200)]
-
-
-def split_real_fake(df):
-    # Syntax: df.loc[df[conditional], [selected data]]
-    df_test_real = df.loc[df["has_unique"], ["ID_code"] + get_colnames()]
-    df_test_fake = df.loc[~df["has_unique"], ["ID_code"] + get_colnames()]
-    return df_test_real, df_test_fake
-
-
-def gen_unique(df, colnames=None):
+def gen_isunique(df, colnames=None):
     """Returns if a value in a column of a dataframe is
     unique (1) or not (0)
 
