@@ -66,3 +66,51 @@ def gen_testdf():
         [2, 2, 3, 5],
         [2, 2, 3, 4]
     ])
+
+
+def gen_isunique(df, colnames=None):
+    """Returns if a value in a column of a dataframe is
+    unique (1) or not (0)
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    colnames : List of columns to be checked for unique values
+
+    Returns
+    -------
+    df_is_unique : pandas.DataFrame
+    """
+    df_is_unique = pd.DataFrame()
+
+    if colnames is None:
+        colnames = df.columns
+
+    for col in colnames:
+        count = df[col].value_counts()
+        is_unique = {f"{col}_u": df[col].isin(count.index[count == 1]) * 1.}
+        df_res = pd.DataFrame.from_dict(is_unique)
+        df_is_unique = pd.concat([df_is_unique, df_res], axis=1)
+
+    return df_is_unique
+
+
+def gen_hasunique(df, colnames=None):
+    """Returns if a row has at least one value of True or 1 over
+    the columns in colnames.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+    colnames : List of columns to be checked for True values
+
+    Returns
+    -------
+    df_has_unique : pd.DataFrame with a single column of results"""
+    if colnames is None:
+        colnames = df.columns
+
+    has_unique = {"has_unique": df[colnames].any(axis=1) * 1.}
+    df_has_unique = pd.DataFrame.from_dict(has_unique)
+
+    return df_has_unique
