@@ -38,7 +38,8 @@ class PandasDataGenerator(DataGenerator):
 
     def assert_datatype(func):
         @wraps(func)
-        def wrapper(self, data):
+        # def wrapper(self, data, colnames):
+        def wrapper(self, data, colnames=None):
             DATATYPE = pd.DataFrame
             assert isinstance(
                 data, DATATYPE), f"Argument type is not {DATATYPE}"
@@ -49,14 +50,6 @@ class PandasDataGenerator(DataGenerator):
     @assert_datatype
     def generate(self, data):
         pass
-
-
-class TestPandasGenerator(PandasDataGenerator):
-
-    @PandasDataGenerator.assert_datatype
-    def generate(data, colnames=None):
-        res = pd.concat([data, data], axis=1)
-        return res
 
 
 class IsUniqueGenerator(PandasDataGenerator):
@@ -153,14 +146,14 @@ def get_data(device=DEVICE):
     iug = IsUniqueGenerator()
     hug = HasUniqueGenerator()
     # Train and validation set
-    df_train_isunique = iug.generate(df=df_train, colnames=colnames)
-    df_train_hasunique = hug.generate(df=df_train_isunique)
+    df_train_isunique = iug.generate(data=df_train, colnames=colnames)
+    df_train_hasunique = hug.generate(data=df_train_isunique)
     df_train = pd.concat(
         [df_train, df_train_isunique, df_train_hasunique], axis=1)
 
     # Test set
-    df_test_isunique = iug.generate(df=df_test, colnames=colnames)
-    df_test_hasunique = hug.generate(df=df_test_isunique)
+    df_test_isunique = iug.generate(data=df_test, colnames=colnames)
+    df_test_hasunique = hug.generate(data=df_test_isunique)
     df_test = pd.concat([df_test, df_test_isunique, df_test_hasunique], axis=1)
 
     # Tensordataset, split trainval_ds in train_ds and val_ds
