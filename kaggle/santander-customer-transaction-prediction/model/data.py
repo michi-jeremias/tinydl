@@ -43,11 +43,10 @@ class PandasDataGenerator(DataGenerator):
             DATATYPE = pd.DataFrame
             assert isinstance(
                 data, DATATYPE), f"Argument type is not {DATATYPE}"
-            return func(data)
+            return func(data, colnames)
         return wrapper
 
     @abstractmethod
-    @assert_datatype
     def generate(self, data):
         pass
 
@@ -144,29 +143,41 @@ def get_data(device=DEVICE):
     colnames = [f'var_{i}' for i in range(200)]
 
     iug = IsUniqueGenerator()
-    hug = HasUniqueGenerator()
+    # hug = HasUniqueGenerator()  # Only used
     # Train and validation set
     df_train_isunique = iug.generate(data=df_train, colnames=colnames)
-    df_train_hasunique = hug.generate(data=df_train_isunique)
-    df_train = pd.concat(
-        [df_train, df_train_isunique, df_train_hasunique], axis=1)
+    # df_train_hasunique is only useful to check the legitimacy of train
+    # samples.
+    # df_train_hasunique = hug.generate(data=df_train_isunique)
+    # df_train = pd.concat(
+    # [df_train, df_train_isunique, df_train_hasunique], axis=1)
+    df_train = pd.concat([df_train, df_train_isunique], axis=1)
 
     # Test set
     df_test_isunique = iug.generate(data=df_test, colnames=colnames)
-    df_test_hasunique = hug.generate(data=df_test_isunique)
-    df_test = pd.concat([df_test, df_test_isunique, df_test_hasunique], axis=1)
+    # df_test_hasunique is only useful to check the legitimacy of test
+    # samples.
+    # df_test_hasunique = hug.generate(data=df_test_isunique)
+    # df_test = pd.concat(
+    # [df_test, df_test_isunique, df_test_hasunique], axis=1)
+    df_test = pd.concat([df_test, df_test_isunique], axis=1)
 
     # Tensordataset, split trainval_ds in train_ds and val_ds
     y_train = torch.tensor(
-        df_train['target'].values, dtype=torch.float32).to(device)
+        df_train['target'].values, dtype=torch.float32).to(DEVICE)
     df_train.drop(['target', 'ID_code'], axis=1, inplace=True)
     X_train = torch.tensor(df_train.values, dtype=torch.float32)
 
-    df_test_real = df_test.loc[df_test['has_unique'] == 1.]
-    df_test_fake = df_test.loc[df_test['has_unique'] != 1.]
+    # Unnecessary
+    # df_test_real = df_test.loc[df_test['has_unique'] == 1.]
+    # df_test_fake = df_test.loc[df_test['has_unique'] != 1.]
 
-    test_idcode = df_test['ID_code']  # ID_code for kaggle submission
+    df_test_idcode = df_test['ID_code']  # ID_code for kaggle submission
+    # df_test_real_idcode = df_test_real['ID_code']
+    # df_test_fake_idcode = df_test_fake['ID_code']
     df_test.drop('ID_code', axis=1, inplace=True)
+    # df_test_real.drop('ID_code', axis=1, inplace=True)
+    # df_test_fake.drop('ID_code', axis=1, inplace=True)
     X_test = torch.tensor(df_test.values, dtype=torch.float32)
 
     trainval_ds = TensorDataset(X_train, y_train)
@@ -175,4 +186,4 @@ def get_data(device=DEVICE):
         lengths=[floor(0.8 * len(trainval_ds)), ceil(0.2 * len(trainval_ds))])
     test_ds = TensorDataset(X_test)
 
-    return train_ds, val_ds, test_ds, test_idcode
+    return train_ds, val_ds, test_ds, df_test_idcode

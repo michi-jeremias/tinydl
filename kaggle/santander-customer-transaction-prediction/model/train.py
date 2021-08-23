@@ -23,7 +23,7 @@ WEIGHT_DECAY = 1e-4
 
 model = SimpleNet(num_in=200, num_hidden=16).to(DEVICE)
 model = OneDimNet(num_in=200, num_hidden=16).to(DEVICE)
-model = TwoDimNet(num_in=200, num_hidden=16).to(DEVICE)
+model = TwoDimNet(num_in=400, num_hidden=16).to(DEVICE)
 
 
 # Data

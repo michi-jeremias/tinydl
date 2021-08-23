@@ -1,4 +1,5 @@
 # Imports
+import torch
 import torch.nn as nn
 
 
@@ -58,14 +59,17 @@ class TwoDimNet(nn.Module):
         self.fc1 = nn.Linear(
             in_features=2, out_features=self.num_hidden, bias=False)
         self.act1 = nn.ReLU(inplace=True)
-        self.fc2 = nn.Linear(in_features=self.num_in
-                             * self.num_hidden, out_features=1)
+        self.fc2 = nn.Linear(in_features=self.num_in // 2 * self.num_hidden,
+                             out_features=1)
         self.act2 = nn.Sigmoid()
 
     def forward(self, x):
         bs = x.shape[0]
         x = self.bn(x)
-        x = x.view(-1, 2)
+        var = x[:, :200].unsqueeze(2)
+        isunique_features = x[:, 200:].unsqueeze(2)
+        x = torch.cat([var, isunique_features], dim=2)
+        x = x.view(-1, 1)
         x = self.fc1(x)
         x = self.act1(x).reshape(bs, -1)
         x = self.fc2(x)
