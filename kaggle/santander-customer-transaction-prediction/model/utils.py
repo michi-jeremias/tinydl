@@ -25,6 +25,11 @@ def get_predictions(loader, model, device):
     return saved_predictions, true_labels
 
 
+def get_submission(model, loader, test_ids, device):
+    all_preds = []
+    model.eval()
+
+
 def plot_correlations(df):
     """Plots correlations of data.
 
@@ -62,7 +67,7 @@ def gen_testdf():
     """
     return pd.DataFrame([
         [1, 2, 3, 4],
-        [2, 2, 3, 4],
+        [2, 2, 3, 6],
         [2, 2, 3, 5],
         [2, 2, 3, 4]
     ])

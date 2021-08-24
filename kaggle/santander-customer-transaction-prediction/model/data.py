@@ -183,7 +183,9 @@ def get_data(device=DEVICE):
     trainval_ds = TensorDataset(X_train, y_train)
     train_ds, val_ds = random_split(
         dataset=trainval_ds,
-        lengths=[floor(0.8 * len(trainval_ds)), ceil(0.2 * len(trainval_ds))])
+        lengths=[floor(0.999 * len(trainval_ds)), ceil(0.001 * len(trainval_ds))])
+    # lengths=[floor(0.8 * len(trainval_ds)), ceil(0.2 * len(trainval_ds))])
     test_ds = TensorDataset(X_test)
+    test_ds = TensorDataset(X_test, y_train)
 
     return train_ds, val_ds, test_ds, df_test_idcode
