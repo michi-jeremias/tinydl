@@ -52,7 +52,8 @@ def train(num_epochs=NUM_EPOCHS):
     for epoch in range(num_epochs):
         probabilities, actuals = get_predictions(val_loader, model, DEVICE)
         print(
-            f'[{epoch + 1}/{num_epochs}]/ Validation ROC: {metrics.roc_auc_score(actuals, probabilities)}')
+            f"[{epoch + 1}/{num_epochs}]/ Validation ROC: "
+            f"{metrics.roc_auc_score(actuals, probabilities)}")
 
         for batch_idx, (data, targets) in enumerate(train_loader):
             data = data.to(DEVICE)
