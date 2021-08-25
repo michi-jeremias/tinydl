@@ -26,8 +26,18 @@ def get_predictions(loader, model, device):
 
 
 def get_submission(model, loader, test_ids, device):
-    all_preds = []
+    df_predictions = pd.DataFrame()
     model.eval()
+
+    for data in loader:
+        scores = model(data).detach().cpu().numpy()
+        df_predictions = pd.concat(
+            [df_predictions, pd.DataFrame(scores)], axis=0)
+
+    # df_submission = pd.concat([test_ids, df_predictions], axis=1)
+    model.train()
+
+    return df_predictions
 
 
 def plot_correlations(df):

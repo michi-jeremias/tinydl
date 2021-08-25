@@ -3,16 +3,16 @@ customer transaction prediction.
 See https://www.kaggle.com/c/santander-customer-transaction-prediction
 """
 
-
 # Imports
-from abc import ABC, abstractmethod
-from functools import wraps
 from math import ceil, floor
 
 import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
 from torch.utils.data.dataset import random_split
+
+from datagenerator import HasUniqueGenerator, IsUniqueGenerator
+
 
 # Device
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -21,104 +21,6 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Paths, constants
 DATAPATH = '../data/'
 LOGPATH = '../logs/'
-
-
-class DataGenerator(ABC):
-
-    @abstractmethod
-    def assert_datatype(func):
-        pass
-
-    @abstractmethod
-    def generate(self):
-        pass
-
-
-class PandasDataGenerator(DataGenerator):
-
-    def assert_datatype(func):
-        @wraps(func)
-        # def wrapper(self, data, colnames):
-        def wrapper(self, data, colnames=None):
-            DATATYPE = pd.DataFrame
-            assert isinstance(
-                data, DATATYPE), f"Argument type is not {DATATYPE}"
-            return func(data, colnames)
-        return wrapper
-
-    @abstractmethod
-    def generate(self, data):
-        pass
-
-
-class IsUniqueGenerator(PandasDataGenerator):
-
-    @PandasDataGenerator.assert_datatype
-    def generate(data, colnames=None):
-        """Returns if a value in a column of a dataframe is
-        unique (1) or not (0)
-
-        Example
-        -------
-        [[1, 0, 0],                 [[0, 0, 0],
-         [1, 0, 0],    generates     [0, 0, 0],
-         [1, 1, 1],                  [0, 1, 0],
-         [2, 0, 1]]                  [1, 0, 0]]
-
-        Parameters
-        ----------
-        df : pandas.DataFrame
-        colnames : List of columns to be checked for unique values
-
-        Returns
-        -------
-        df_is_unique : pandas.DataFrame
-        """
-        df_is_unique = pd.DataFrame()
-
-        if colnames is None:
-            colnames = data.columns
-
-        for col in colnames:
-            count = data[col].value_counts()
-            is_unique = {f"{col}_u": data[col].isin(
-                count.index[count == 1]) * 1.}
-            df_res = pd.DataFrame.from_dict(is_unique)
-            df_is_unique = pd.concat([df_is_unique, df_res], axis=1)
-
-        return df_is_unique
-
-
-class HasUniqueGenerator(PandasDataGenerator):
-
-    @PandasDataGenerator.assert_datatype
-    def generate(data, colnames=None):
-        """Returns if a row has at least one value of True or 1 over
-        the columns in colnames. It's basically the evaluation of an OR
-        statement of a row across all columns.
-
-        Example
-        -------
-        [[1, 0, 0],                 [[1],
-         [0, 0, 0],    generates     [0],
-         [1, 1, 1],                  [1],
-         [0, 0, 1]]                  [1]]
-
-        Parameters
-        ----------
-        df : pandas.DataFrame
-        colnames : List of columns to be checked for True values
-
-        Returns
-        -------
-        df_has_unique : pd.DataFrame with a single column of results"""
-        if colnames is None:
-            colnames = data.columns
-
-        has_unique = {"has_unique": data[colnames].any(axis=1) * 1.}
-        df_has_unique = pd.DataFrame.from_dict(has_unique)
-
-        return df_has_unique
 
 
 # Load data
@@ -143,7 +45,7 @@ def get_data(device=DEVICE):
     colnames = [f'var_{i}' for i in range(200)]
 
     iug = IsUniqueGenerator()
-    # hug = HasUniqueGenerator()  # Only used
+    # hug = HasUniqueGenerator()  # Used to find real/fake data in test set
     # Train and validation set
     df_train_isunique = iug.generate(data=df_train, colnames=colnames)
     # df_train_hasunique is only useful to check the legitimacy of train
@@ -183,9 +85,9 @@ def get_data(device=DEVICE):
     trainval_ds = TensorDataset(X_train, y_train)
     train_ds, val_ds = random_split(
         dataset=trainval_ds,
-        lengths=[floor(0.999 * len(trainval_ds)), ceil(0.001 * len(trainval_ds))])
+        lengths=[floor(0.999 * len(trainval_ds)),
+                 ceil(0.001 * len(trainval_ds))])
     # lengths=[floor(0.8 * len(trainval_ds)), ceil(0.2 * len(trainval_ds))])
-    test_ds = TensorDataset(X_test)
     test_ds = TensorDataset(X_test, y_train)
 
-    return train_ds, val_ds, test_ds, df_test_idcode
+    return train_ds, val_ds,test_ds, df_test_idcode

@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from data import get_data
-from model import SimpleNet, OneDimNet, TwoDimNet
+from model import SimpleNet, OneDimNet, TwoDimNet, NN
 from utils import get_predictions, plot_correlations
 
 # Device
@@ -24,6 +24,7 @@ WEIGHT_DECAY = 1e-4
 model = SimpleNet(num_in=200, num_hidden=16).to(DEVICE)
 model = OneDimNet(num_in=200, num_hidden=16).to(DEVICE)
 model = TwoDimNet(num_in=400, num_hidden=100).to(DEVICE)
+model = NN(input_size=400, hidden_dim=100).to(DEVICE)
 
 
 # Data
@@ -45,12 +46,13 @@ loss_fn = nn.BCELoss()
 
 # Train
 def train(num_epochs=NUM_EPOCHS):
+    print("Start training.")
     model.train()
 
     for epoch in range(num_epochs):
         probabilities, actuals = get_predictions(val_loader, model, DEVICE)
         print(
-            f'Validation ROC: {metrics.roc_auc_score(actuals, probabilities)}')
+            f'[{epoch + 1}/{num_epochs}]/ Validation ROC: {metrics.roc_auc_score(actuals, probabilities)}')
 
         for batch_idx, (data, targets) in enumerate(train_loader):
             data = data.to(DEVICE)
@@ -66,3 +68,5 @@ def train(num_epochs=NUM_EPOCHS):
 
             if batch_idx == 0:
                 print(loss)
+
+    print("Finished training.")

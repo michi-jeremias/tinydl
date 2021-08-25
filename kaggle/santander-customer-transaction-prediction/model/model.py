@@ -1,6 +1,7 @@
 # Imports
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 # Models
@@ -80,7 +81,7 @@ class NN(nn.Module):
         super(NN, self).__init__()
         self.bn = nn.BatchNorm1d(input_size)
         self.fc1 = nn.Linear(2, hidden_dim)
-        self.fc2 = nn.Linear(input_size//2*hidden_dim, 1)
+        self.fc2 = nn.Linear(input_size // 2 * hidden_dim, 1)
 
     def forward(self, x):
         N = x.shape[0]
