@@ -6,6 +6,8 @@ See https://www.kaggle.com/c/santander-customer-transaction-prediction
 # Imports
 from math import ceil, floor
 
+from tqdm import tqdm
+import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
@@ -91,3 +93,24 @@ def get_data(device=DEVICE):
     test_ds = TensorDataset(X_test, y_train)
 
     return train_ds, val_ds, test_ds, df_test_idcode
+
+
+def get_submission(model, loader, test_ids, device):
+    all_preds = []
+    model.eval()
+    with torch.no_grad():
+        for x, y in tqdm(loader):
+            # print(x.shape)
+            x = x.to(device)
+            score = model(x)
+            prediction = score.float()
+            all_preds += prediction.tolist()
+
+    model.train()
+
+    df = pd.DataFrame({
+        "ID_code": test_ids.values,
+        "target": np.array(all_preds)
+    })
+
+    df.to_csv(DATAPATH + "sub.csv", index=False)
