@@ -42,6 +42,4 @@ def get_submission(model, loader, test_ids, device):
         "target": np.array(all_preds)
     })
 
-    df.to_csv(DATAPATH + "subala.csv", index=False)
-
-    return df
+    df.to_csv("subala.csv", index=False)
