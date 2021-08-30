@@ -4,7 +4,7 @@ import torch
 from tqdm import tqdm
 
 
-DATAPATH = "../data/"
+DATAPATH = "../../data/"
 
 
 def get_predictions(loader, model, device):
@@ -42,4 +42,4 @@ def get_submission(model, loader, test_ids, device):
         "target": np.array(all_preds)
     })
 
-    df.to_csv("subala.csv", index=False)
+    df.to_csv(DATAPATH + "subala.csv", index=False)

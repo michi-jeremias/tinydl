@@ -26,7 +26,7 @@ LOGPATH = '../logs/'
 
 
 # Load data
-def get_data(device=DEVICE):
+def prepare_data(device=DEVICE):
     # Read csv data, drop target column (train.csv) and ID_code column
     # (train.csv, test.csv).
     # Split train into train and validation.
@@ -47,8 +47,35 @@ def get_data(device=DEVICE):
     colnames = [f'var_{i}' for i in range(200)]
 
     iug = IsUniqueGenerator()
-    # hug = HasUniqueGenerator()  # Used to find real/fake data in test set
+    hug = HasUniqueGenerator()  # Used to find real/fake data in test set
+
+    # Generate unique information in test set
+    df_test_isunique = iug.generate(df_test, colnames=colnames)
+    df_test_hasunique = hug.generate(df_test_isunique)
+
+    df_test_all = pd.concat(
+        [df_test, df_test_isunique, df_test_hasunique], axis=1)
+
+    df_test_real = df_test_all.loc[df_test_all['has_unique'] == 1., [
+        "ID_code"] + colnames]
+    df_test_fake = df_test_all.loc[df_test_all['has_unique'] != 1., [
+        "ID_code"] + colnames]
+
+    # TODO: here
+
+    # Find unique values in train AND real test
+    df_train_and_real_test = pd.concat([df_train, df_test_real], axis=0)
+    df_train_and_real_test_isunique = pd.concat(
+        [df_train_and_real_test, iug.generate(df_train_and_real_test)], axis=1)
+
+    df_train = df_train_and_real_test_isunique[df_train_and_real_test_isunique["ID_code"].str.contains(
+        'train')].copy()
+    df_test = df_train_and_real_test_isunique[df_train_and_real_test_isunique["ID_code"].str.contains(
+        'test')].copy()
+    df_test.drop("target", axis=1, inplace=True)
+    df_test = pd.concat([df_test, df_test_fake], axis=0)
     # Train and validation set
+
     df_train_isunique = iug.generate(data=df_train, colnames=colnames)
     # df_train_hasunique is only useful to check the legitimacy of train
     # samples.
@@ -71,10 +98,6 @@ def get_data(device=DEVICE):
         df_train['target'].values, dtype=torch.float32).to(DEVICE)
     df_train.drop(['target', 'ID_code'], axis=1, inplace=True)
     X_train = torch.tensor(df_train.values, dtype=torch.float32)
-
-    # Unnecessary
-    # df_test_real = df_test.loc[df_test['has_unique'] == 1.]
-    # df_test_fake = df_test.loc[df_test['has_unique'] != 1.]
 
     df_test_idcode = df_test['ID_code']  # ID_code for kaggle submission
     # df_test_real_idcode = df_test_real['ID_code']
