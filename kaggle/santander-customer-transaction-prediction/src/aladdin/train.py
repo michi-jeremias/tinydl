@@ -2,11 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import pandas as pd
+import numpy as np
 from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from dataset import get_and_transform_data, get_data, get_shiny_data
+from dataset import get_mj_data
 from utils import get_predictions, get_submission
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -15,6 +18,12 @@ loss_fn = nn.BCELoss()
 
 # Original data
 train_ds, val_ds, test_ds, test_ids = get_data()
+
+# Original and engineered data
+train_ds, val_ds, test_ds, test_ids = get_shiny_data()
+train_loader = DataLoader(train_ds, batch_size=1024, shuffle=True)
+val_loader = DataLoader(val_ds, batch_size=1024)
+test_loader = DataLoader(test_ds, batch_size=1024)
 
 # Original and engineered data
 train_ds, val_ds, test_ds, test_ids = get_shiny_data()

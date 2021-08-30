@@ -61,61 +61,57 @@ def prepare_data(device=DEVICE):
     df_test_fake = df_test_all.loc[df_test_all['has_unique'] != 1., [
         "ID_code"] + colnames]
 
-    # TODO: here
+    df_train_test = pd.concat([df_train, df_test_real, df_test_fake], axis=0)
+    df_isunique = iug.generate(df_train_test, colnames=colnames)
+    df_hasunique = hug.generate(df_isunique)
+    df_all = pd.concat([df_train_test, df_isunique, df_hasunique], axis=1)
 
-    # Find unique values in train AND real test
-    df_train_and_real_test = pd.concat([df_train, df_test_real], axis=0)
-    df_train_and_real_test_isunique = pd.concat(
-        [df_train_and_real_test, iug.generate(df_train_and_real_test)], axis=1)
+    df_train = df_all[df_all["ID_code"].str.contains(
+        "train")].copy().drop("has_unique", axis=1)
+    df_test = df_all[df_all["ID_code"].str.contains(
+        "test")].copy().drop(["target", "has_unique"], axis=1)
 
-    df_train = df_train_and_real_test_isunique[df_train_and_real_test_isunique["ID_code"].str.contains(
-        'train')].copy()
-    df_test = df_train_and_real_test_isunique[df_train_and_real_test_isunique["ID_code"].str.contains(
-        'test')].copy()
-    df_test.drop("target", axis=1, inplace=True)
-    df_test = pd.concat([df_test, df_test_fake], axis=0)
+    df_train.to_csv(DATAPATH + "mj_train.csv", index=False)
+    df_test.to_csv(DATAPATH + "mj_test.csv", index=False)
     # Train and validation set
 
-    df_train_isunique = iug.generate(data=df_train, colnames=colnames)
-    # df_train_hasunique is only useful to check the legitimacy of train
-    # samples.
-    # df_train_hasunique = hug.generate(data=df_train_isunique)
-    # df_train = pd.concat(
-    # [df_train, df_train_isunique, df_train_hasunique], axis=1)
-    df_train = pd.concat([df_train, df_train_isunique], axis=1)
 
-    # Test set
-    df_test_isunique = iug.generate(data=df_test, colnames=colnames)
-    # df_test_hasunique is only useful to check the legitimacy of test
-    # samples.
-    # df_test_hasunique = hug.generate(data=df_test_isunique)
-    # df_test = pd.concat(
-    # [df_test, df_test_isunique, df_test_hasunique], axis=1)
-    df_test = pd.concat([df_test, df_test_isunique], axis=1)
-
-    # Tensordataset, split trainval_ds in train_ds and val_ds
-    y_train = torch.tensor(
-        df_train['target'].values, dtype=torch.float32).to(DEVICE)
-    df_train.drop(['target', 'ID_code'], axis=1, inplace=True)
-    X_train = torch.tensor(df_train.values, dtype=torch.float32)
-
-    df_test_idcode = df_test['ID_code']  # ID_code for kaggle submission
-    # df_test_real_idcode = df_test_real['ID_code']
-    # df_test_fake_idcode = df_test_fake['ID_code']
-    df_test.drop('ID_code', axis=1, inplace=True)
-    # df_test_real.drop('ID_code', axis=1, inplace=True)
-    # df_test_fake.drop('ID_code', axis=1, inplace=True)
-    X_test = torch.tensor(df_test.values, dtype=torch.float32)
-
-    trainval_ds = TensorDataset(X_train, y_train)
+def get_mj_data():
+    train_data = pd.read_csv(DATAPATH + "mj_train.csv")
+    y = train_data["target"]
+    X = train_data.drop(["ID_code", "target"], axis=1)
+    X_tensor = torch.tensor(X.values, dtype=torch.float32)
+    y_tensor = torch.tensor(y.values, dtype=torch.float32)
+    ds = TensorDataset(X_tensor, y_tensor)
     train_ds, val_ds = random_split(
-        dataset=trainval_ds,
-        lengths=[floor(0.999 * len(trainval_ds)),
-                 ceil(0.001 * len(trainval_ds))])
-    # lengths=[floor(0.8 * len(trainval_ds)), ceil(0.2 * len(trainval_ds))])
-    test_ds = TensorDataset(X_test, y_train)
+        ds, [int(0.999 * len(ds)), ceil(0.001 * len(ds))])
 
-    return train_ds, val_ds, test_ds, df_test_idcode
+    test_data = pd.read_csv(DATAPATH + "mj_test.csv")
+    test_ids = test_data["ID_code"]
+    X = test_data.drop(["ID_code"], axis=1)
+    X_tensor = torch.tensor(X.values, dtype=torch.float32)
+    test_ds = TensorDataset(X_tensor, y_tensor)
+
+    return train_ds, val_ds, test_ds, test_ids
+
+
+def get_shiny_data():
+    train_data = pd.read_csv(DATAPATH + "new_shiny_train.csv")
+    y = train_data["target"]
+    X = train_data.drop(["ID_code", "target"], axis=1)
+    X_tensor = torch.tensor(X.values, dtype=torch.float32)
+    y_tensor = torch.tensor(y.values, dtype=torch.float32)
+    ds = TensorDataset(X_tensor, y_tensor)
+    train_ds, val_ds = random_split(
+        ds, [int(0.999 * len(ds)), ceil(0.001 * len(ds))])
+
+    test_data = pd.read_csv(DATAPATH + "new_shiny_test.csv")
+    test_ids = test_data["ID_code"]
+    X = test_data.drop(["ID_code"], axis=1)
+    X_tensor = torch.tensor(X.values, dtype=torch.float32)
+    test_ds = TensorDataset(X_tensor, y_tensor)
+
+    return train_ds, val_ds, test_ds, test_ids
 
 
 def get_submission(model, loader, test_ids, device):
