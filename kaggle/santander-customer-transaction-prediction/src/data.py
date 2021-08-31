@@ -61,15 +61,20 @@ def prepare_data(device=DEVICE):
     df_test_fake = df_test_all.loc[df_test_all['has_unique'] != 1., [
         "ID_code"] + colnames]
 
-    df_train_test = pd.concat([df_train, df_test_real, df_test_fake], axis=0)
+    df_train_test = pd.concat([df_train, df_test_real], axis=0)
     df_isunique = iug.generate(df_train_test, colnames=colnames)
-    df_hasunique = hug.generate(df_isunique)
-    df_all = pd.concat([df_train_test, df_isunique, df_hasunique], axis=1)
+    df_train_test_isunique = pd.concat([df_train_test, df_isunique], axis=1)
+    df_zeros = pd.DataFrame(
+        np.zeros_like(df_test_fake[colnames]),
+        columns=[col + "_u" for col in colnames],
+        index=df_test_fake.index)
+    df_test_fake_isunique = pd.concat([df_test_fake, df_zeros], axis=1)
 
-    df_train = df_all[df_all["ID_code"].str.contains(
-        "train")].copy().drop("has_unique", axis=1)
-    df_test = df_all[df_all["ID_code"].str.contains(
-        "test")].copy().drop(["target", "has_unique"], axis=1)
+    df_train = df_train_test_isunique[df_train_test_isunique["ID_code"].str.contains(
+        "train")].copy()
+    df_real_test = df_train_test_isunique[df_train_test_isunique["ID_code"].str.contains(
+        "test")].copy().drop(["target"], axis=1)
+    df_test = pd.concat([df_real_test, df_test_fake_isunique], axis=0)
 
     df_train.to_csv(DATAPATH + "mj_train.csv", index=False)
     df_test.to_csv(DATAPATH + "mj_test.csv", index=False)
