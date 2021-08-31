@@ -65,11 +65,11 @@ class IsUniqueGenerator(PandasDataGenerator):
         for col in colnames:
             count = data[col].value_counts()
             is_unique = {f"{col}_u": data[col].isin(
-                count.index[count == 1]) * 1.}
+                count.index[count == 1])}
             df_res = pd.DataFrame.from_dict(is_unique)
             df_is_unique = pd.concat([df_is_unique, df_res], axis=1)
 
-        return df_is_unique
+        return df_is_unique * 1
 
 
 class HasUniqueGenerator(PandasDataGenerator):
@@ -98,7 +98,7 @@ class HasUniqueGenerator(PandasDataGenerator):
         if colnames is None:
             colnames = data.columns
 
-        has_unique = {"has_unique": data[colnames].any(axis=1) * 1.}
+        has_unique = {"has_unique": data[colnames].any(axis=1)}
         df_has_unique = pd.DataFrame.from_dict(has_unique)
 
-        return df_has_unique
+        return df_has_unique * 1
