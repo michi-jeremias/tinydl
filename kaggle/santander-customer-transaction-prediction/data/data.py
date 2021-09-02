@@ -13,20 +13,12 @@ import torch
 from torch.utils.data import TensorDataset
 from torch.utils.data.dataset import random_split
 
-from datagenerator import HasUniqueGenerator, IsUniqueGenerator
+from data.datagenerator import HasUniqueGenerator, IsUniqueGenerator
+from data.const import DATAPATH, LOGPATH
 
 
-# Device
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-# Paths, constants
-DATAPATH = '../data/'
-LOGPATH = '../logs/'
-
-
-# Load data
-def prepare_data(device=DEVICE):
+# Augment data
+def prepare_data():
     # Read csv data, drop target column (train.csv) and ID_code column
     # (train.csv, test.csv).
     # Split train into train and validation.
@@ -34,6 +26,8 @@ def prepare_data(device=DEVICE):
     # the test set.
 
     # Read pandas dataframes
+    df_train, df_test = None, None
+
     try:
         path = DATAPATH + 'train.csv'
         df_train = pd.read_csv(path)
@@ -77,13 +71,13 @@ def prepare_data(device=DEVICE):
             "target"], axis=1)
     df_test = pd.concat([df_test_real_isunique, df_test_fake_isunique], axis=0)
 
-    df_train.to_csv(DATAPATH + "mj_train.csv", index=False)
-    df_test.to_csv(DATAPATH + "mj_test.csv", index=False)
+    df_train.to_csv(DATAPATH + "aug_train.csv", index=False)
+    df_test.to_csv(DATAPATH + "aug_test.csv", index=False)
     # Train and validation set
 
 
-def get_mj_data():
-    train_data = pd.read_csv(DATAPATH + "mj_train.csv")
+def get_data(train="aug_train.csv", test="aug_test.csv"):
+    train_data = pd.read_csv(DATAPATH + train)
     y = train_data["target"]
     X = train_data.drop(["ID_code", "target"], axis=1)
     X_tensor = torch.tensor(X.values, dtype=torch.float32)
@@ -92,7 +86,7 @@ def get_mj_data():
     train_ds, val_ds = random_split(
         ds, [int(0.999 * len(ds)), ceil(0.001 * len(ds))])
 
-    test_data = pd.read_csv(DATAPATH + "mj_test.csv")
+    test_data = pd.read_csv(DATAPATH + test)
     test_ids = test_data["ID_code"]
     X = test_data.drop(["ID_code"], axis=1)
     X_tensor = torch.tensor(X.values, dtype=torch.float32)
@@ -120,7 +114,7 @@ def get_shiny_data():
     return train_ds, val_ds, test_ds, test_ids
 
 
-def get_submission(model, loader, test_ids, device):
+def get_submission(model, loader, test_ids, device, filename="sub.csv"):
     all_preds = []
     model.eval()
     with torch.no_grad():
@@ -138,4 +132,4 @@ def get_submission(model, loader, test_ids, device):
         "target": np.array(all_preds)
     })
 
-    df.to_csv(DATAPATH + "sub.csv", index=False)
+    df.to_csv(DATAPATH + filename, index=False)

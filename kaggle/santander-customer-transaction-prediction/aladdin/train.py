@@ -8,8 +8,7 @@ from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset import get_and_transform_data, get_data, get_shiny_data
-from dataset import get_mj_data
+from dataset import get_and_transform_data, get_data
 from utils import get_predictions, get_submission
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -17,16 +16,14 @@ loss_fn = nn.BCELoss()
 
 
 # Original data
-train_ds, val_ds, test_ds, test_ids = get_data()
+train_ds, val_ds, test_ds, test_ids = get_data("train.csv", "test.csv")
+
+# mj augmented data
+train_ds, val_ds, test_ds, test_ids = get_data("aug_train.csv", "aug_test.csv")
 
 # Original and engineered data
-train_ds, val_ds, test_ds, test_ids = get_shiny_data()
-train_loader = DataLoader(train_ds, batch_size=1024, shuffle=True)
-val_loader = DataLoader(val_ds, batch_size=1024)
-test_loader = DataLoader(test_ds, batch_size=1024)
-
-# Original and engineered data
-train_ds, val_ds, test_ds, test_ids = get_shiny_data()
+train_ds, val_ds, test_ds, test_ids = get_data(
+    "new_shiny_train.csv", "new_shiny_test.csv")
 train_loader = DataLoader(train_ds, batch_size=1024, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=1024)
 test_loader = DataLoader(test_ds, batch_size=1024)

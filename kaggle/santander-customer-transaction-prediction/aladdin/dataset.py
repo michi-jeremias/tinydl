@@ -7,7 +7,7 @@ from torch.utils.data.dataset import random_split
 from tqdm import tqdm
 
 
-DATAPATH = "../../data/"
+DATAPATH = "files/"
 
 
 def get_and_transform_data():
@@ -45,9 +45,9 @@ def get_and_transform_data():
 
     for col in tqdm(col_names):
         count = train_and_test[col].value_counts().to_dict()
-        train_and_test[col + "_unique"] = train_and_test[col].apply(
+        train_and_test[col + "_u"] = train_and_test[col].apply(
             lambda x: 1 if count[x] == 1 else 0).values
-        fake_test[col + "_unique"] = 0
+        fake_test[col + "_u"] = 0
 
     # 5.
     real_test = train_and_test[train_and_test["ID_code"].str.contains(
