@@ -8,8 +8,8 @@ from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset import get_and_transform_data, get_data
-from utils import get_predictions, get_submission
+from aladdin.dataset import get_and_transform_data, get_data
+from aladdin.utils import get_predictions, get_submission
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 loss_fn = nn.BCELoss()

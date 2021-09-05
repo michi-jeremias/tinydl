@@ -6,10 +6,9 @@ from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data.data import get_data, get_submission
-from model.model import SimpleNet, OneDimNet, TwoDimNet, NN2
 from auxiliary.utils import get_predictions
-
+from data.data import get_data, get_submission
+from model.model import NN2, NN3
 
 # Device
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,9 +22,8 @@ WEIGHT_DECAY = 1e-4
 
 
 # Data
-
 train_ds, val_ds, test_ds, test_ids = get_data(
-    train="aug_train.csv", test="aug_test.csv")
+    train="aug_train.csv", test="aug_test.csv", submission=True)
 train_loader = DataLoader(
     dataset=train_ds, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(dataset=val_ds, batch_size=BATCH_SIZE)
@@ -33,9 +31,7 @@ test_loader = DataLoader(dataset=test_ds, batch_size=BATCH_SIZE)
 
 
 # Model, Optimizer
-# model = SimpleNet(num_in=200, num_hidden=16).to(DEVICE)
-# model = OneDimNet(num_in=200, num_hidden=16).to(DEVICE)
-# model = TwoDimNet(num_in=400, num_hidden=100).to(DEVICE)
+# model = NN2(input_size=400, hidden_dim=100).to(DEVICE)
 model = NN2(input_size=400, hidden_dim=100).to(DEVICE)
 optimizer = optim.Adam(model.parameters(), lr=2e-3, weight_decay=1e-4)
 
@@ -71,3 +67,6 @@ def train(num_epochs=NUM_EPOCHS):
                 print(loss)
 
     print("Finished training.")
+
+
+get_submission(model, test_loader, test_ids, DEVICE)

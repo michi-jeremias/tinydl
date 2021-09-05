@@ -13,7 +13,7 @@ class DataGenerator(ABC):
         pass
 
     @abstractmethod
-    def generate(self):
+    def generate(self, data):
         pass
 
 
@@ -37,7 +37,7 @@ class PandasDataGenerator(DataGenerator):
 class IsUniqueGenerator(PandasDataGenerator):
 
     @PandasDataGenerator.assert_datatype
-    def generate(data, colnames=None):
+    def generate(data, colnames=None) -> pd.DataFrame:
         """Returns if a value in a column of a dataframe is
         unique (1) or not (0)
 
@@ -75,7 +75,7 @@ class IsUniqueGenerator(PandasDataGenerator):
 class HasUniqueGenerator(PandasDataGenerator):
 
     @PandasDataGenerator.assert_datatype
-    def generate(data, colnames=None):
+    def generate(data, colnames=None) -> pd.DataFrame:
         """Returns if a row has at least one value of True or 1 over
         the columns in colnames. It's basically the evaluation of an OR
         statement of a row across all columns.

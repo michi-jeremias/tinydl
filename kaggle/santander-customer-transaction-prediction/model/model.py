@@ -92,3 +92,23 @@ class NN2(nn.Module):
         x = torch.cat([orig_features, new_features], dim=2)  # (BS, 200, 2)
         x = F.relu(self.fc1(x)).reshape(BS, -1)  # (N, 200 * hidden)
         return torch.sigmoid(self.fc2(x)).view(-1)
+
+
+class NN3(nn.Module):
+    def __init__(self, input_size, hidden_dim):
+        super().__init__()
+        self.bn = nn.BatchNorm1d(input_size)
+        self.fc1 = nn.Linear(2, hidden_dim)  # changed
+        self.fc2 = nn.Linear(input_size // 2 * hidden_dim, 50)
+        self.fc3 = nn.Linear(50, 1)
+
+    def forward(self, x):
+        BS = x.shape[0]  # Batch size
+        x = self.bn(x)
+        orig_features = x[:, :200].unsqueeze(2)  # (BS, 200, 1)
+        new_features = x[:, 200:].unsqueeze(2)  # (BS, 200, 1)
+
+        x = torch.cat([orig_features, new_features], dim=2)  # (BS, 200, 2)
+        x = F.relu(self.fc1(x)).reshape(BS, -1)  # (N, 200 * hidden)
+        x = F.relu(self.fc2(x))
+        return torch.sigmoid(self.fc3(x)).view(-1)
