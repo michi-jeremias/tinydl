@@ -9,6 +9,7 @@ from tqdm import tqdm
 from auxiliary.utils import get_predictions
 from data.data import get_data, get_submission
 from model.model import NN2, NN3
+from model.utils import init_normal, init_xavier
 
 # Device
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -33,7 +34,12 @@ test_loader = DataLoader(dataset=test_ds, batch_size=BATCH_SIZE)
 # Model, Optimizer
 # model = NN2(input_size=400, hidden_dim=100).to(DEVICE)
 model = NN2(input_size=400, hidden_dim=100).to(DEVICE)
-optimizer = optim.Adam(model.parameters(), lr=2e-3, weight_decay=1e-4)
+optimizer = optim.Adam(
+    params=model.parameters(),
+    lr=2e-3,
+    weight_decay=1e-4)
+
+model.apply(init_normal)
 
 
 # Loss
@@ -69,4 +75,4 @@ def train(num_epochs=NUM_EPOCHS):
     print("Finished training.")
 
 
-get_submission(model, test_loader, test_ids, DEVICE)
+get_submission(model, test_loader, test_ids, DEVICE, "subtoday.csv")
