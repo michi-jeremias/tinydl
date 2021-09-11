@@ -8,11 +8,13 @@ from tqdm import tqdm
 
 from auxiliary.utils import get_predictions
 from data.data import get_data, get_submission
+from data.loader import Loader
 from model.model import NN2, NN3
 from model.utils import init_normal, init_xavier
+from trainer.trainer import Trainer
 
 # Device
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # Hyperparameters
@@ -29,11 +31,11 @@ train_loader = DataLoader(
     dataset=train_ds, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(dataset=val_ds, batch_size=BATCH_SIZE)
 test_loader = DataLoader(dataset=test_ds, batch_size=BATCH_SIZE)
-
+loader = Loader(train_loader, val_loader, test_loader)
 
 # Model, Optimizer
 # model = NN2(input_size=400, hidden_dim=100).to(DEVICE)
-model = NN2(input_size=400, hidden_dim=100).to(DEVICE)
+model = NN2(input_size=400, hidden_dim=100)
 optimizer = optim.Adam(
     params=model.parameters(),
     lr=2e-3,
