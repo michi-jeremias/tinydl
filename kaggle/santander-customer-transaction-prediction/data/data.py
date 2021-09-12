@@ -13,7 +13,7 @@ import torch
 from torch.utils.data import TensorDataset
 from torch.utils.data.dataset import random_split
 
-from data.datagenerator import HasUniqueGenerator, IsUniqueGenerator
+from data.augmenter import HasUniqueGenerator, IsUniqueGenerator
 from data.const import DATAPATH, LOGPATH
 
 
