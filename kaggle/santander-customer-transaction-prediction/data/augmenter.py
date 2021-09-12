@@ -6,7 +6,7 @@ import pandas as pd
 
 
 # Classes
-class DataGenerator(ABC):
+class Augmenter(ABC):
 
     @abstractmethod
     def assert_datatype(func):
@@ -17,7 +17,7 @@ class DataGenerator(ABC):
         pass
 
 
-class PandasDataGenerator(DataGenerator):
+class PandasAugmenter(Augmenter):
 
     def assert_datatype(func):
         @wraps(func)
@@ -34,9 +34,9 @@ class PandasDataGenerator(DataGenerator):
         pass
 
 
-class IsUniqueGenerator(PandasDataGenerator):
+class IsUniqueGenerator(PandasAugmenter):
 
-    @PandasDataGenerator.assert_datatype
+    @PandasAugmenter.assert_datatype
     def generate(data, colnames=None) -> pd.DataFrame:
         """Returns if a value in a column of a dataframe is
         unique (1) or not (0)
@@ -72,9 +72,9 @@ class IsUniqueGenerator(PandasDataGenerator):
         return df_is_unique * 1
 
 
-class HasUniqueGenerator(PandasDataGenerator):
+class HasUniqueGenerator(PandasAugmenter):
 
-    @PandasDataGenerator.assert_datatype
+    @PandasAugmenter.assert_datatype
     def generate(data, colnames=None) -> pd.DataFrame:
         """Returns if a row has at least one value of True or 1 over
         the columns in colnames. It's basically the evaluation of an OR
