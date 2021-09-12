@@ -1,10 +1,8 @@
 # Imports
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn import metrics
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from auxiliary.utils import get_predictions
 from data.data import get_data, get_submission
@@ -19,9 +17,6 @@ from trainer.trainer import Trainer
 
 # Hyperparameters
 BATCH_SIZE = 1024
-LR = 2e-3
-NUM_EPOCHS = 20
-WEIGHT_DECAY = 1e-4
 
 
 # Data
@@ -48,33 +43,52 @@ model.apply(init_normal)
 loss_fn = nn.BCELoss()
 
 
-# Train
-def train(num_epochs=NUM_EPOCHS):
-    print("Start training.")
-    model.train()
+trainer = Trainer(
+    model=model,
+    optimizer=optim.Adam(
+        params=model.parameters(),
+        lr=2e-3,
+        weight_decay=1e-4
+    ),
+    loader=loader,
+    loss_fn=nn.BCELoss(),
+    metrics_fn=metrics.roc_auc_score
+)
 
-    for epoch in range(num_epochs):
-        probabilities, actuals = get_predictions(val_loader, model, DEVICE)
-        print(
-            f"[{epoch + 1}/{num_epochs}] Validation ROC: "
-            f"{metrics.roc_auc_score(actuals, probabilities)}")
+trainer.train(20)
 
-        for batch_idx, (data, targets) in enumerate(train_loader):
-            data = data.to(DEVICE)
-            targets = targets.to(DEVICE)
+# # Train
+# def train(num_epochs=NUM_EPOCHS):
+#     print("Start training.")
+#     model.train()
 
-            # Forward
-            scores = model(data)
-            loss = loss_fn(scores, targets)
+#     for epoch in range(num_epochs):
+#         predictions, actuals = get_predictions(val_loader, model, DEVICE)
+#         print(
+#             f"[{epoch + 1}/{num_epochs}] Validation ROC: "
+#             f"{metrics.roc_auc_score(actuals, predictions)}")
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+#         for batch_idx, (data, targets) in enumerate(train_loader):
+#             data = data.to(DEVICE)
+#             targets = targets.to(DEVICE)
 
-            if batch_idx == 0:
-                print(loss)
+#             # Forward
+#             scores = model(data)
+#             loss = loss_fn(scores, targets)
 
-    print("Finished training.")
+#             optimizer.zero_grad()
+#             loss.backward()
+#             optimizer.step()
+
+#             if batch_idx == 0:
+#                 print(loss)
+
+#     print("Finished training.")
 
 
-get_submission(model, test_loader, test_ids, DEVICE, "subtoday.csv")
+get_submission(
+    model=trainer.model,
+    loader=test_loader,
+    test_ids=test_ids,
+    device="cuda",
+    filename="subtoday.csv")
