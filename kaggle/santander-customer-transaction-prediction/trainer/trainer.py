@@ -10,15 +10,35 @@ from model.utils import init_normal, init_xavier
 
 class Trainer():
 
-    def __init__(self, model, optimizer, loader) -> None:
+    def __init__(self, model, optimizer, loader, loss_fn, metrics_fn) -> None:
+        """Interface for training models.
+
+        Parameters
+        ----------
+        model : PyTorch neural network
+        optimizer : torch.optim object
+        loader : a container class for torch DataLoaders
+        loss_fn : the loss function
+        metrics_fn : function reporting a metric
+        """
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
         self.epochs_trained = 0
-        self.loader = loader
+
+        # Parameters
         self.model = model.to(self.device)
         self.optimizer = optimizer
+        self.loader = loader
+        self.loss_fn = loss_fn
+        self.metrics_fn = metrics_fn
+
         self.lr = self.optimizer.param_groups[0]['lr']
         self.weight_decay = self.optimizer.param_groups[0]['weight_decay']
+
+    def __call__(self):
+        print(f"Model: {self.model}")
+        print(f"Loss function: {self.loss_fn}")
+        print(f"Optimizer: {self.optimizer}")
 
     def train(self, num_epochs) -> None:
         """Trains self.model for num_epochs epochs.
@@ -33,23 +53,41 @@ class Trainer():
                 f"[{self.epochs_trained + epoch + 1}/"
                 f"{self.epochs_trained + num_epochs}]")
             self.validate()
+
+            for batch_idx, (data, targets) in enumerate(self.loader.train_loader):
+                data = data.to(self.device)
+                targets = targets.to(self.device)
+
+                # Forward
+                scores = self.model(data)
+                loss = self.loss_fn(scores, targets)
+
+                # Backward
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+                if batch_idx == 0:
+                    print(loss)
+
         self.epochs_trained += num_epochs
 
     def validate(self) -> None:
-        """Reports a metric on the validation set."""
-        print("Validation statistic: ")
-
+        """Reports a metric from self.metrics_fn on the validation set."""
         self.model.eval()
-        saved_preds = []
-        true_labels = []
+        predictions = []
+        actuals = []
 
         with torch.no_grad():
+
             for x, y in self.loader.train_loader:
                 x = x.to(self.device)
                 y = y.to(self.device)
                 scores = self.model(x)
-                saved_preds += scores.tolist()
-                true_labels += y.tolist()
+                predictions += scores.tolist()
+                actuals += y.tolist()
+
+        print(f"Validation ROC: {self.metrics_fn(actuals, predictions)}")
         self.model.train()
 
     def reset(self) -> None:
