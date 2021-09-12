@@ -6,19 +6,19 @@ import torch
 
 def get_predictions(loader, model, device):
     model.eval()
-    saved_preds = []
-    true_labels = []
+    predictions = []
+    actuals = []
 
     with torch.no_grad():
         for x, y in loader:
             x = x.to(device)
             y = y.to(device)
             scores = model(x)
-            saved_preds += scores.tolist()
-            true_labels += y.tolist()
+            predictions += scores.tolist()
+            actuals += y.tolist()
 
     model.train()
-    return saved_preds, true_labels
+    return predictions, actuals
 
 
 def plot_correlations(df):
