@@ -2,54 +2,76 @@ from abc import ABC, ABCMeta, abstractmethod
 import torch
 import torchvision
 import torch.optim as optim
+import torch.nn as nn
+from deeplearning.model.init import init_normal
 
 
 class ITrainer(ABCMeta):
+    """Interface for training models."""
 
+    @staticmethod
     @abstractmethod
-    def train():
-        pass
+    def train(num_epochs: int) -> None:
+        """This method trains a model.
 
+        Parameters
+        ----------
+        num_epochs : number of epochs the model will be trained."""
+
+    @staticmethod
     @abstractmethod
-    def reset():
-        pass
+    def reset() -> None:
+        """This method resets the parameters of a model and the optimizer."""
 
 
 class Trainer(ITrainer):
 
-    def __init__(self, model, optimizer, loader, loss_fn, metrics_fn, init_fn) -> None:
-        """Interface for training models.
-
+    def __init__(
+            self,
+            model: nn.Module,
+            optimizer: torch.optim.Adam,
+            loader: torch.utils.data.DataLoader,
+            loss_fn,
+            metrics_fn,
+            init_fn=init_normal) -> None:
+        """
         Parameters
         ----------
         model : PyTorch neural network
         optimizer : torch.optim object
-        loader : a container class for torch DataLoaders
+        loader : a torch dataloader
         loss_fn : the loss function
         metrics_fn : function reporting a metric
         init_fn : function that initializes the parameters of the model
         """
+
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
         self.epochs_trained = 0
 
-        # Parameters
+        # Components
         self.model = model.to(self.device)
         self.optimizer = optimizer
         self.loader = loader
         self.loss_fn = loss_fn
-        self.metrics_fn = metrics_fn
+        # self.metrics_fn = metrics_fn
         self.init_fn = init_fn
 
-        self.lr = self.optimizer.param_groups[0]['lr']
-        self.weight_decay = self.optimizer.param_groups[0]['weight_decay']
+        # Hyperparameters
+        self.HPARAMS = {
+            "lr": self.optimizer.param_groups[0]['lr'],
+            "weight_decay": self.optimizer.param_groups[0]['weight_decay'],
+            "batch_size": self.loader.batch_size
+        }
 
-    def __call__(self):
-        print(f"Model: {self.model}")
-        print(f"Loss function: {self.loss_fn}")
-        print(f"Optimizer: {self.optimizer}")
+        self.reset()
 
-    def train(self, num_epochs) -> None:
+    # def __call__(self):
+    #     print(f"Model: {self.model}")
+    #     print(f"Loss function: {self.loss_fn}")
+    #     print(f"Optimizer: {self.optimizer}")
+
+    def train(self, num_epochs: int) -> None:
         """Trains self.model for num_epochs epochs.
 
         Parameters
@@ -81,32 +103,34 @@ class Trainer(ITrainer):
 
         self.epochs_trained += num_epochs
 
-        print(f"Validation ROC: {self.metrics_fn(actuals, predictions)}")
-        self.model.train()
+        # print(f"Validation ROC: {self.metrics_fn(actuals, predictions)}")
+        # self.model.train()
 
     def reset(self) -> None:
+        """Resets model.parameters() with self.init_fn, and
+        self.optimizer."""
+
         self.model.apply(self.init_fn)
         self.optimizer = optim.Adam(
             params=self.model.parameters(),
-            lr=self.lr,
-            weight_decay=self.weight_decay
+            lr=self.HPARAMS["lr"],
+            weight_decay=self.HPARAMS["weight_decay"]
         )
         self.epochs_trained = 0
 
-    # def validate(self) -> None:
-    #     """Reports a metric from self.metrics_fn on the validation set."""
-    #     self.model.eval()
-    #     predictions = []
-    #     actuals = []
+    def set_hparams(self, hparams: dict) -> None:
+        """Method to change the hyperparamter setup."""
 
-    #     with torch.no_grad():
+        self.HPARAMS["lr"] = hparams.get("lr", self.HPARAMS["lr"])
+        self.optimizer.param_groups[0]["lr"] = self.HPARAMS["lr"]
 
-    #         for x, y in self.loader.train_loader:
-    #             x = x.to(self.device)
-    #             y = y.to(self.device)
-    #             scores = self.model(x)
-    #             predictions += scores.tolist()
-    #             actuals += y.tolist()
+        self.HPARAMS["weight_decay"] = hparams.get(
+            "weight_decay", self.HPARAMS["weight_decay"])
+        self.optimizer.param_groups[0]["weight_deday"] = self.HPARAMS["weight_deday"]
+
+        self.HPARAMS["batch_size"] = hparams.get(
+            "batch_size", self.HPARAMS["batch_size"])
+        self.loader.batch_size = self.HPARAMS["batch_size"]
 
     # @abstractmethod
     # def out(self):
