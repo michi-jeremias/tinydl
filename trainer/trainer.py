@@ -1,24 +1,68 @@
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
+
 import torch
-import torchvision
+# import torch.nn
 import torch.optim as optim
-import torch.nn as nn
+import torchvision
 from deeplearning.model.init import init_normal
+from tqdm import tqdm
 
 
-class ITrainer(ABCMeta):
-    """Interface for training models."""
+class ITrainer(ABC):
+    """Template class for training models."""
 
-    @staticmethod
-    @abstractmethod
-    def train(num_epochs: int) -> None:
+    def __init__(self):
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+
+    def train(self, num_epochs: int) -> None:
         """This method trains a model.
 
         Parameters
         ----------
         num_epochs : number of epochs the model will be trained."""
+        self.epochs_to_be_trained = num_epochs
+        self.before_training()
+        for _ in range(num_epochs):
+            self.before_epoch()
+            self.train_epoch()
+            self.after_epoch()
+        self.after_training()
+
+    def before_training(self):
+        """Hook at the start of the training."""
 
     @staticmethod
+    def before_epoch():
+        """Hook at the start of each epoch."""
+
+    @staticmethod
+    @abstractmethod
+    def train_epoch(self):
+        self.before_batch()
+        self.train_batch()
+        self.after_batch()
+
+    @staticmethod
+    def before_batch():
+        """Hook at the start of each batch."""
+
+    @staticmethod
+    def train_batch():
+        """Hook for training a batch."""
+
+    @staticmethod
+    def after_batch():
+        """Hook at the end of each batch."""
+
+    @staticmethod
+    def after_epoch():
+        """Hook at the end of each epoch."""
+
+    # @staticmethod
+    def after_training(self):
+        """Hook at the start of the training."""
+
     @abstractmethod
     def reset() -> None:
         """This method resets the parameters of a model and the optimizer."""
@@ -28,11 +72,11 @@ class Trainer(ITrainer):
 
     def __init__(
             self,
-            model: nn.Module,
+            model: torch.nn.Module,
             optimizer: torch.optim.Adam,
             loader: torch.utils.data.DataLoader,
             loss_fn,
-            metrics_fn,
+            # metrics_fn,
             init_fn=init_normal) -> None:
         """
         Parameters
@@ -41,20 +85,21 @@ class Trainer(ITrainer):
         optimizer : torch.optim object
         loader : a torch dataloader
         loss_fn : the loss function
-        metrics_fn : function reporting a metric
         init_fn : function that initializes the parameters of the model
         """
 
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
+        super().__init__()
+
+        # For output during training
         self.epochs_trained = 0
+        self.epochs_total = 0
+        self.loss = -1.
 
         # Components
         self.model = model.to(self.device)
         self.optimizer = optimizer
         self.loader = loader
         self.loss_fn = loss_fn
-        # self.metrics_fn = metrics_fn
         self.init_fn = init_fn
 
         # Hyperparameters
@@ -71,44 +116,57 @@ class Trainer(ITrainer):
     #     print(f"Loss function: {self.loss_fn}")
     #     print(f"Optimizer: {self.optimizer}")
 
-    def train(self, num_epochs: int) -> None:
-        """Trains self.model for num_epochs epochs.
+    def before_training(self):
+        """Method executed before a full training cycle."""
+
+        print("before training")
+        self.epochs_trained = 0
+
+    def before_epoch(self):
+        """Method executed before training an epoch."""
+
+        self.model.train()
+        print("before epoch")
+        print(
+            f"[{self.epochs_total + self.epochs_trained + 1}/{self.epochs_to_be_trained + self.epochs_total}]")
+
+    def train_epoch(self) -> None:
+        """Method to train the model.
 
         Parameters
         ----------
-        num_epochs : int
+        num_epochs : Number of epochs self.model will be trained.
         """
-        self.model.train()
 
-        for epoch in range(num_epochs):
-            print(
-                f"[{self.epochs_trained + epoch + 1}/"
-                f"{self.epochs_trained + num_epochs}]")
+        print("train epoch")
 
-            for batch_idx, (data, targets) in enumerate(self.loader.train_loader):
-                data = data.to(self.device)
-                targets = targets.to(self.device)
+        for batch_idx, (data, targets) in tqdm(enumerate(self.loader)):
+            data = data.to(self.device)
+            targets = targets.to(self.device)
 
-                # Forward
-                scores = self.model(data)
-                loss = self.loss_fn(scores, targets)
+            # Forward
+            scores = self.model(data)
+            self.loss = self.loss_fn(scores, targets)
 
-                # Backward
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
+            # Backward
+            self.optimizer.zero_grad()
+            self.loss.backward()
+            self.optimizer.step()
 
-                if batch_idx == 0:
-                    print(loss)
-
-        self.epochs_trained += num_epochs
+    def after_epoch(self):
+        self.epochs_trained += 1
+        print("after epoch")
+        print(f"Loss: {self.loss}")
 
         # print(f"Validation ROC: {self.metrics_fn(actuals, predictions)}")
         # self.model.train()
 
+    def after_training(self):
+        print("after training")
+        self.epochs_total += self.epochs_trained
+
     def reset(self) -> None:
-        """Resets model.parameters() with self.init_fn, and
-        self.optimizer."""
+        """Method to reset the model and the optimizer."""
 
         self.model.apply(self.init_fn)
         self.optimizer = optim.Adam(
@@ -116,7 +174,7 @@ class Trainer(ITrainer):
             lr=self.HPARAMS["lr"],
             weight_decay=self.HPARAMS["weight_decay"]
         )
-        self.epochs_trained = 0
+        self.epochs_total = 0
 
     def set_hparams(self, hparams: dict) -> None:
         """Method to change the hyperparamter setup."""
