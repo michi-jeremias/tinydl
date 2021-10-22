@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 import torch
-# import torch.nn
 import torch.optim as optim
 import torchvision
 from deeplearning.model.init import init_normal
@@ -76,7 +75,7 @@ class Trainer(ITrainer):
             optimizer: torch.optim.Adam,
             loader: torch.utils.data.DataLoader,
             loss_fn,
-            # metrics_fn,
+            metrics,
             init_fn=init_normal) -> None:
         """
         Parameters
@@ -85,6 +84,8 @@ class Trainer(ITrainer):
         optimizer : torch.optim object
         loader : a torch dataloader
         loss_fn : the loss function
+        metrics : one or more IMEtric() objects to report a metric
+                  through a IReporter()
         init_fn : function that initializes the parameters of the model
         """
 
@@ -100,6 +101,8 @@ class Trainer(ITrainer):
         self.optimizer = optimizer
         self.loader = loader
         self.loss_fn = loss_fn
+        if not isinstance(metrics, list):
+            self.metrics = [metrics]
         self.init_fn = init_fn
 
         # Hyperparameters
@@ -128,7 +131,7 @@ class Trainer(ITrainer):
         self.model.train()
         print("before epoch")
         print(
-            f"[{self.epochs_total + self.epochs_trained + 1}/{self.epochs_to_be_trained + self.epochs_total}]")
+            f"Epoch [{self.epochs_total + self.epochs_trained + 1}/{self.epochs_to_be_trained + self.epochs_total}]")
 
     def train_epoch(self) -> None:
         """Method to train the model.
@@ -152,6 +155,11 @@ class Trainer(ITrainer):
             self.optimizer.zero_grad()
             self.loss.backward()
             self.optimizer.step()
+
+        with torch.no_grad():
+            for metric in self.metrics:
+                metric.calculate(scores, targets)
+                metric.notify()
 
     def after_epoch(self):
         self.epochs_trained += 1
@@ -385,15 +393,3 @@ class GANTrainer(ITrainer):
             weight_decay=self.weight_decay
         )
         self.epochs_trained = 0
-
-
-class TensorboardLogger:
-    pass
-
-
-class ScalarLogger(TensorboardLogger):
-    pass
-
-
-class ImageLogger(TensorboardLogger):
-    pass
