@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 import torch
 import torch.optim as optim
 import torchvision
-from deeplearning.model.init import init_normal
+from deeplearning.modelinit import init_normal
 from tqdm import tqdm
 
 
-class ITrainer(ABC):
+class TrainerTemplate(ABC):
     """Template class for training models."""
 
     def __init__(self):
@@ -67,13 +67,13 @@ class ITrainer(ABC):
         """This method resets the parameters of a model and the optimizer."""
 
 
-class Trainer(ITrainer):
+class Trainer(TrainerTemplate):
 
     def __init__(
             self,
             model: torch.nn.Module,
             optimizer: torch.optim.Adam,
-            loader: torch.utils.data.DataLoader,
+            train_loader: torch.utils.data.DataLoader,
             loss_fn,
             metrics,
             init_fn=init_normal) -> None:
@@ -99,7 +99,7 @@ class Trainer(ITrainer):
         # Components
         self.model = model.to(self.device)
         self.optimizer = optimizer
-        self.loader = loader
+        self.train_loader = train_loader
         self.loss_fn = loss_fn
         if not isinstance(metrics, list):
             self.metrics = [metrics]
@@ -109,7 +109,7 @@ class Trainer(ITrainer):
         self.HPARAMS = {
             "lr": self.optimizer.param_groups[0]['lr'],
             "weight_decay": self.optimizer.param_groups[0]['weight_decay'],
-            "batch_size": self.loader.batch_size
+            "batch_size": self.train_loader.batch_size
         }
 
         self.reset()
@@ -122,16 +122,14 @@ class Trainer(ITrainer):
     def before_training(self):
         """Method executed before a full training cycle."""
 
-        print("before training")
         self.epochs_trained = 0
 
     def before_epoch(self):
         """Method executed before training an epoch."""
 
         self.model.train()
-        print("before epoch")
-        print(
-            f"Epoch [{self.epochs_total + self.epochs_trained + 1}/{self.epochs_to_be_trained + self.epochs_total}]")
+        print(f"Epoch [{self.epochs_total + self.epochs_trained + 1}/"
+              f"{self.epochs_to_be_trained + self.epochs_total}]")
 
     def train_epoch(self) -> None:
         """Method to train the model.
@@ -141,9 +139,7 @@ class Trainer(ITrainer):
         num_epochs : Number of epochs self.model will be trained.
         """
 
-        print("train epoch")
-
-        for batch_idx, (data, targets) in tqdm(enumerate(self.loader)):
+        for batch_idx, (data, targets) in tqdm(enumerate(self.train_loader)):
             data = data.to(self.device)
             targets = targets.to(self.device)
 
@@ -162,15 +158,12 @@ class Trainer(ITrainer):
                 metric.notify()
 
     def after_epoch(self):
+
         self.epochs_trained += 1
-        print("after epoch")
         print(f"Loss: {self.loss}")
 
-        # print(f"Validation ROC: {self.metrics_fn(actuals, predictions)}")
-        # self.model.train()
-
     def after_training(self):
-        print("after training")
+
         self.epochs_total += self.epochs_trained
 
     def reset(self) -> None:
@@ -196,11 +189,7 @@ class Trainer(ITrainer):
 
         self.HPARAMS["batch_size"] = hparams.get(
             "batch_size", self.HPARAMS["batch_size"])
-        self.loader.batch_size = self.HPARAMS["batch_size"]
-
-    # @abstractmethod
-    # def out(self):
-    #     pass
+        self.train_loader.batch_size = self.HPARAMS["batch_size"]
 
     # @abstractmethod
     # def save_model(self) -> None:
@@ -211,7 +200,7 @@ class Trainer(ITrainer):
     #     pass
 
 
-class GANTrainer(ITrainer):
+class GANTrainer(TrainerTemplate):
 
     def __init__(self, model_g, model_d, optim_g, optim_d, loader, loss_fn,
                  init_fn, z_dim, img_size) -> None:
