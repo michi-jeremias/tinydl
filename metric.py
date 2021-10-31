@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 
-# from deeplearning.metricreporter.reporter import IReporter
 import sklearn.metrics
 
 
 class IMetric(ABC):
-    """Interface for a metric."""
+    """Interface for a Metric. The metric gets reported through a
+    Reporter."""
 
     def __init__(self) -> None:
         self._reporters = set()
