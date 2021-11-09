@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import sklearn.metrics
 
 
-class IMetric(ABC):
+class Metric(ABC):
     """Interface for a Metric. The metric gets reported through a
     Reporter."""
 
@@ -32,7 +32,7 @@ class IMetric(ABC):
         """Push a message to the Reporter()."""
 
 
-class DummyMetric(IMetric):
+class DummyMetric(Metric):
 
     def __init__(self) -> None:
         super().__init__()
@@ -48,7 +48,7 @@ class DummyMetric(IMetric):
         self.value += 1
 
 
-class RocAuc(IMetric):
+class RocAuc(Metric):
 
     def __init__(self) -> None:
         super().__init__()
