@@ -1,43 +1,47 @@
 from abc import ABC, abstractmethod
+from typing import Any, List
 
 import torch
 import torch.optim as optim
 import torchvision
-from deeplearning.modelinit import init_normal
 from tqdm import tqdm
 
+from deeplearning.modelinit import init_normal
+from metric import Metric
 
-class TrainerTemplate(ABC):
+
+class RunnerTemplate(ABC):
     """Template class for training models."""
 
     def __init__(self):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
 
-    def train(self, num_epochs: int) -> None:
-        """This method trains a model.
+    def run(self, num_epochs: int) -> None:
+        """This method runs through all batches of data, and does
+        something with a model.
 
         Parameters
         ----------
-        num_epochs : number of epochs the model will be trained."""
+        num_epochs : number of epochs the data will be processed."""
         self.epochs_to_be_trained = num_epochs
-        self.before_training()
+        self.before_all_epochs()
         for _ in range(num_epochs):
-            self.before_epoch()
-            self.train_epoch()
+            self.before_one_epoch()
+            self.process_epoch()
             self.after_epoch()
         self.after_training()
 
-    def before_training(self):
-        """Hook at the start of the training."""
+    def before_all_epochs(self):
+        """Hook before any data has been processed."""
 
     @staticmethod
-    def before_epoch():
+    def before_one_epoch():
         """Hook at the start of each epoch."""
 
     @staticmethod
     @abstractmethod
-    def train_epoch(self):
+    def process_epoch(self):
         self.before_batch()
         self.train_batch()
         self.after_batch()
@@ -67,15 +71,16 @@ class TrainerTemplate(ABC):
         """This method resets the parameters of a model and the optimizer."""
 
 
-class Trainer(TrainerTemplate):
+class Trainer(RunnerTemplate):
 
     def __init__(
             self,
             model: torch.nn.Module,
             optimizer: torch.optim.Adam,
-            train_loader: torch.utils.data.DataLoader,
+            # optimizer: Optional[torch.optim.Adam] = None,
+            loader: torch.utils.data.DataLoader[Any],
             loss_fn,
-            metrics,
+            metrics: List[Metric],
             init_fn=init_normal) -> None:
         """
         Parameters
@@ -84,25 +89,24 @@ class Trainer(TrainerTemplate):
         optimizer : torch.optim object
         loader : a torch dataloader
         loss_fn : the loss function
-        metrics : one or more IMEtric() objects to report a metric
-                  through a IReporter()
+        metrics : one or more Metric() objects to report a metric
+                  through a Reporter()
         init_fn : function that initializes the parameters of the model
         """
 
         super().__init__()
 
         # For output during training
-        self.epochs_trained = 0
+        self.epochs_processed = 0
         self.epochs_total = 0
         self.loss = -1.
 
         # Components
         self.model = model.to(self.device)
         self.optimizer = optimizer
-        self.train_loader = train_loader
+        self.train_loader = loader
         self.loss_fn = loss_fn
-        if not isinstance(metrics, list):
-            self.metrics = [metrics]
+        self.metrics = metrics if isinstance(metrics, list) else [metrics]
         self.init_fn = init_fn
 
         # Hyperparameters
@@ -119,19 +123,19 @@ class Trainer(TrainerTemplate):
     #     print(f"Loss function: {self.loss_fn}")
     #     print(f"Optimizer: {self.optimizer}")
 
-    def before_training(self):
+    def before_all_epochs(self):
         """Method executed before a full training cycle."""
 
-        self.epochs_trained = 0
+        self.epochs_processed = 0
 
     def before_epoch(self):
         """Method executed before training an epoch."""
 
         self.model.train()
-        print(f"Epoch [{self.epochs_total + self.epochs_trained + 1}/"
+        print(f"Epoch [{self.epochs_total + self.epochs_processed + 1}/"
               f"{self.epochs_to_be_trained + self.epochs_total}]")
 
-    def train_epoch(self) -> None:
+    def process_epoch(self) -> None:
         """Method to train the model.
 
         Parameters
@@ -159,12 +163,12 @@ class Trainer(TrainerTemplate):
 
     def after_epoch(self):
 
-        self.epochs_trained += 1
+        self.epochs_processed += 1
         print(f"Loss: {self.loss}")
 
-    def after_training(self):
+    def after_all_epochs(self):
 
-        self.epochs_total += self.epochs_trained
+        self.epochs_total += self.epochs_processed
 
     def reset(self) -> None:
         """Method to reset the model and the optimizer."""
@@ -200,7 +204,47 @@ class Trainer(TrainerTemplate):
     #     pass
 
 
-class GANTrainer(TrainerTemplate):
+class Validator(RunnerTemplate):
+
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        loader: torch.utils.data.dataloader,
+        metrics: List[Metric],
+    ):
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+
+        self.model = model.to(self.device)
+        self.loader = loader
+        self.metrics = metrics if isinstance(metrics, list) else [metrics]
+
+        self.epoch_scores = []
+        self.epoch_targets = []
+
+    def before_epoch(self):
+        self.model.eval()
+
+    def process_epoch(self) -> None:
+        self.epoch_scores = []
+        self.epoch_targets = []
+
+        with torch.no_grad():
+
+            for batch_idx, (data, targets) in enumerate(self.loader):
+                current_bs = data.shape[0]
+                data = data.to(self.device)
+                targets = targets.to(self.device)
+                scores = self.model(data)
+
+    def after_epoch(self):
+        with torch.no_grad():
+            for metric in self.metrics:
+                metric.calculate(self.epoch_scores, self.epoch_targets)
+                metric.notify()
+
+
+class GANTrainer(RunnerTemplate):
 
     def __init__(self, model_g, model_d, optim_g, optim_d, loader, loss_fn,
                  init_fn, z_dim, img_size) -> None:
