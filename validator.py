@@ -1,10 +1,14 @@
 from abc import ABCMeta, abstractmethod
+from typing import List
+
 import torch
 import torch.nn
 import torch.utils.data.dataloader
 
+from metric import Metric
 
-class IValidator(ABCMeta):
+
+class ValidatorTemplate(ABCMeta):
 
     @abstractmethod
     @staticmethod
@@ -12,16 +16,20 @@ class IValidator(ABCMeta):
         """Validates predictions against targets."""
 
 
-class Validator(IValidator):
+class Validator(ValidatorTemplate):
 
-    def __init__(self,
-                 model: torch.nn.Module,
-                 loader: torch.utils.data.dataloader):
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        loader: torch.utils.data.dataloader,
+        metrics: List[Metric],
+    ):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = model.to(self.device)
         self.loader = loader
+        self.metrics = metrics if not isinstance(metrics, list) else [metrics]
 
     def validate(self) -> None:
         self.model.eval()
