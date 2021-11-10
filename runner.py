@@ -7,7 +7,7 @@ import torchvision
 from tqdm import tqdm
 
 from deeplearning.modelinit import init_normal
-from metric import Metric
+from deeplearning.metric import Metric
 
 
 class RunnerTemplate(ABC):
@@ -30,7 +30,7 @@ class RunnerTemplate(ABC):
             self.before_one_epoch()
             self.process_epoch()
             self.after_epoch()
-        self.after_training()
+        self.after_run()
 
     def before_all_epochs(self):
         """Hook before any data has been processed."""
@@ -63,7 +63,7 @@ class RunnerTemplate(ABC):
         """Hook at the end of each epoch."""
 
     # @staticmethod
-    def after_training(self):
+    def after_run(self):
         """Hook at the start of the training."""
 
     @abstractmethod
