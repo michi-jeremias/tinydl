@@ -36,7 +36,7 @@ class DummyMetric(Metric):
 
     def __init__(self) -> None:
         super().__init__()
-        self.name = "Dummey Metric"
+        self.name = "Dummy Metric"
         self.value = -1.
 
     def notify(self, *args) -> None:
