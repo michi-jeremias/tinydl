@@ -17,7 +17,7 @@ class ConsoleReporter(Reporter):
         self.name = name if name else "ConsoleReporter"
 
     def notify(self, metric, *args):
-        print(f"{metric.name}: {metric.value}")
+        print(f"({self.name}) {metric.name}: {metric.value}")
 
 
 class TensorboardReporter(Reporter):
