@@ -17,7 +17,12 @@ class Runner():
         return strategy()
 
 
-class Predictor():
+class Predictor(ABC):
+
+    def __init__(self):
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+
     @staticmethod
     @abstractmethod
     def __call__():
@@ -25,16 +30,22 @@ class Predictor():
 
 
 class Trainer(Predictor):
-    def __init__(self, loader):
+    def __init__(self, loader, optimizer, loss_fn, metrics=[]):
+        super().__init__()
         self.loader = loader
+        self.optimizer = optimizer
+        self.loss_fn = loss_fn
+        self.metrics = metrics if isinstance(metrics, list) else [metrics]
 
-    def train(self):
+    def train(self, model):
+        model.train()
+
         for batch_idx, (data, targets) in tqdm(enumerate(self.loader)):
             data = data.to(self.device)
             targets = targets.to(self.device)
 
             # Forward
-            scores = self.model(data)
+            scores = model(data)
             self.loss = self.loss_fn(scores, targets)
 
             # Backward
@@ -47,8 +58,29 @@ class Trainer(Predictor):
                 metric.calculate(scores, targets)
                 metric.notify()
 
-    def get_predictions(self):
-        pass
+    __call__ = train
+
+
+class Validator(Predictor):
+    def __init__(self, loader, metrics):
+        super().__init__()
+        self.loader = loader
+        self.metrics = metrics if isinstance(metrics, list) else [metrics]
+
+    def validate(self, model):
+        model.eval()
+
+        with torch.no_grad():
+            for batch_idx, (data, targets) in tqdm(enumerate(self.loader)):
+                data = data.to(self.device)
+                targets = targets.to(self.device)
+                scores = model(data)
+
+            for metric in self.metrics:
+                metric.calculate(scores, targets)
+                metric.notify()
+
+    __call__ = validate
 
 
 class RunnerTemplate(ABC):
@@ -112,7 +144,7 @@ class RunnerTemplate(ABC):
         """This method resets the parameters of a model and the optimizer."""
 
 
-class Trainer(RunnerTemplate):
+class Trainer_Template(RunnerTemplate):
 
     def __init__(
             self,
