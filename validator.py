@@ -29,7 +29,7 @@ class Validator(ValidatorTemplate):
 
         self.model = model.to(self.device)
         self.loader = loader
-        self.metrics = metrics if not isinstance(metrics, list) else [metrics]
+        self.metrics = metrics if isinstance(metrics, list) else [metrics]
 
     def validate(self) -> None:
         self.model.eval()
