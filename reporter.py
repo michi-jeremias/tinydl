@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class IReporter(ABC):
+class Reporter(ABC):
     """Interface for a reporter."""
 
     @abstractmethod
@@ -9,21 +9,21 @@ class IReporter(ABC):
         """Receive notifications from metrics."""
 
 
-class ConsoleReporter(IReporter):
+class ConsoleReporter(Reporter):
     """The ConsoleReporter prints the name and value of a metric
     the console."""
 
-    def __init__(self) -> None:
-        self.name = "ConsoleReporter"
+    def __init__(self, name=None) -> None:
+        self.name = name if name else "ConsoleReporter"
 
     def notify(self, metric, *args):
         print(f"{metric.name}: {metric.value}")
 
 
-class TensorboardReporter(IReporter):
+class TensorboardReporter(Reporter):
 
-    def __init__(self) -> None:
-        self.name = "TensorboardReporter"
+    def __init__(self, name=None) -> None:
+        self.name = name if name else "TensorboardReporter"
 
     def notify(self, metric, *args):
         # TODO: implement
