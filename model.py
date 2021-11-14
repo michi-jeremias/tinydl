@@ -2,9 +2,29 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from deeplearning.modelinit import init_normal, init_xavier
 
 
-# Models
+class Model():
+
+    def __init__(self, module) -> None:
+        device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+        self.module = module.to(device)
+
+    def init_normal(self):
+        self.module.apply(init_normal)
+
+    def init_xavier(self):
+        self.module.apply(init_xavier)
+
+    def forward(self):
+        return self.module
+
+    __call__ = forward
+
+
+# NN Architectures
 class SimpleNet(nn.Module):
 
     def __init__(self, num_in, num_hidden):
