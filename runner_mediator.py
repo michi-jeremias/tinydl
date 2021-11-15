@@ -41,10 +41,16 @@ class Runner(RunnerMediator):
         self.validator = validator
 
     def train(self) -> None:
-        self.trainer.train(self.model, self.optimizer, self.loss_fn)
+        try:
+            self.trainer.train(self.model, self.optimizer, self.loss_fn)
+        except AttributeError:
+            print("No trainer in runner.")
 
     def validate(self) -> None:
-        self.validator.validate(self.model)
+        try:
+            self.validator.validate(self.model)
+        except AttributeError:
+            print("No validator in runner.")
 
     def run(self) -> None:
         self.train()
