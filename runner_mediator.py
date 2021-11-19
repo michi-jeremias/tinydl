@@ -52,9 +52,10 @@ class Runner(RunnerMediator):
         except AttributeError:
             print("No validator in runner.")
 
-    def run(self) -> None:
-        self.train()
-        self.validate()
+    def run(self, num_epochs=1) -> None:
+        for _ in range(num_epochs):
+            self.train()
+            self.validate()
 
 
 class Trainer(RunnerMediator):
