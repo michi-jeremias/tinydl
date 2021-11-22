@@ -44,9 +44,12 @@ class TensorboardHparamReporter(Reporter):
     tensorboard.SummaryWriter().add_hparams() with the name and value of
     the metric."""
 
-    def __init__(self, name=None, log_dir=None) -> None:
+    def __init__(self, name=None, hparam: dict = {}) -> None:
         self.name = name if name else "TensorboardHparamReporter"
-        self.log_dir = log_dir
+        self.hparam = hparam
+        dir_name = "_".join(
+            [f"{key}_{self.hparam[key]}" for key in self.hparam])
+        self.log_dir = "runs/" + dir_name
         self.writer = SummaryWriter(log_dir=self.log_dir)
         self.step = 0
 
@@ -55,7 +58,7 @@ class TensorboardHparamReporter(Reporter):
         self.writer.add_scalar(f"{metric.name}", metric.value)
         self.writer.add_hparams(
             # hparam_dict={'learningrate': lr, 'batchsize': bs},
-            hparam_dict={"batchsize": 128, "lr": 2e-3},
+            hparam_dict=self.hparam,
             metric_dict={f"{metric.name}": metric.value})
 
         self.writer.add_scalar(
