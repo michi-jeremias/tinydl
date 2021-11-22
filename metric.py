@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 
 import sklearn.metrics
+# from torch.nn import BCELoss
+from torch.nn import BCELoss
+import torch
 
 
 class Metric(ABC):
@@ -62,3 +65,20 @@ class RocAuc(Metric):
 
     def calculate(self, scores, targets) -> None:
         self.value = sklearn.metrics.roc_auc_score(targets, scores)
+
+
+class BinaryCrossentropy(Metric):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "BCE"
+        self.value = -1.
+        self.bce_loss = BCELoss()
+
+    def notify(self, *args) -> None:
+        """Sends the name and last value of the metric to the reporter."""
+        for reporter in self._reporters:
+            reporter.notify(self, *args)
+
+    def calculate(self, scores, targets) -> None:
+        self.value = self.bce_loss(scores, targets)
