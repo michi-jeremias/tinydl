@@ -60,10 +60,13 @@ class Runner(RunnerMediator):
 
 class Trainer(RunnerMediator):
 
-    def __init__(self, loader, metrics) -> None:
+    def __init__(self, loader, batch_metrics, epoch_metrics) -> None:
         super().__init__()
         self.loader = loader
-        self.metrics = metrics if isinstance(metrics, list) else [metrics]
+        self.batch_metrics = batch_metrics if isinstance(
+            batch_metrics, list) else [batch_metrics]
+        self.epoch_metrics = epoch_metrics if isinstance(
+            epoch_metrics, list) else [epoch_metrics]
 
     def train(self, model, optimizer, loss_fn) -> None:
         print(f"Trainer.train")
@@ -82,8 +85,13 @@ class Trainer(RunnerMediator):
             self.loss.backward()
             optimizer.step()
 
+            with torch.no_grad():
+                for metric in self.batch_metrics:
+                    metric.calculate(scores, targets)
+                    metric.notify()
+
         with torch.no_grad():
-            for metric in self.metrics:
+            for metric in self.epoch_metrics:
                 metric.calculate(scores, targets)
                 metric.notify()
 
