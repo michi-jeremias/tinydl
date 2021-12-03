@@ -19,7 +19,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # Hyperparameters
-DATAPATH = '../data'
+DATAPATH = 'data'
 num_epochs = 5
 
 
@@ -72,7 +72,7 @@ criterion = nn.CrossEntropyLoss()
 
 
 # Tensorboard
-TBLOGPATH = '../logs/tensorboard'
+TBLOGPATH = 'logs/tensorboard'
 learning_rates = [0.001]
 batch_sizes = [1024]
 learning_rates = [0.1, 0.01, 0.001, 0.0001]
