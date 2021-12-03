@@ -54,16 +54,14 @@ class TensorboardHparamReporter(Reporter):
         self.step = 0
 
     def notify(self, metric, *args):
-        print("notify tb logger")
-        self.writer.add_scalar(f"{metric.name}", metric.value)
-        self.writer.add_hparams(
-            # hparam_dict={'learningrate': lr, 'batchsize': bs},
-            hparam_dict=self.hparam,
-            metric_dict={f"{metric.name}": metric.value})
+        # print("notify tb logger")
 
         self.writer.add_scalar(
             metric.name,
             scalar_value=metric.value,
             global_step=self.step
         )
+        self.writer.add_hparams(
+            hparam_dict=self.hparam,
+            metric_dict={f"{metric.name}": metric.value})
         self.step += 1
