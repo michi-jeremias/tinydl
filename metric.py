@@ -40,7 +40,7 @@ class DummyMetric(Metric):
     def __init__(self) -> None:
         super().__init__()
         self.name = "Dummy Metric"
-        self.value = -1.
+        self.value = 1.
 
     def notify(self, *args) -> None:
         """Sends the name and last value of the metric to the reporter."""
@@ -48,7 +48,7 @@ class DummyMetric(Metric):
             reporter.notify(self, *args)
 
     def calculate(self, scores, targets) -> None:
-        self.value += 1
+        self.value = self.value * 0.95
 
 
 class RocAuc(Metric):
