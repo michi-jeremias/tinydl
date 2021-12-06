@@ -6,3 +6,5 @@ logs
 data/
 refactor/
 auxiliary/
+build/
+dist/
