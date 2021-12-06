@@ -3,3 +3,6 @@
 *.csv
 __pycache__
 logs
+data/
+refactor/
+auxiliary/
