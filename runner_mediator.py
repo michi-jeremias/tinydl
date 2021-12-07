@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import torch
 from tqdm import tqdm
 
+from tinydl.hyperparameter import Hyperparameter
 from tinydl.metric import Metric
 from tinydl.modelinit import init_normal
 
@@ -26,17 +27,10 @@ class Runner(RunnerMediator):
     """This is a mediator that operates with its colleagues Trainer and
     Validator."""
 
-    def __init__(
-            self,
-            model,
-            optimizer,
-            loss_fn,
-            trainer=None,
-            validator=None) -> None:
+    def __init__(self, model, trainer=None: Trainer,
+                 validator=None: Validator) -> None:
         super().__init__()
         self.model = model.to(self.device)
-        self.optimizer = optimizer
-        self.loss_fn = loss_fn
         self.trainer = trainer
         self.validator = validator
 
@@ -60,15 +54,17 @@ class Runner(RunnerMediator):
 
 class Trainer(RunnerMediator):
 
-    def __init__(self, loader, batch_metrics, epoch_metrics) -> None:
+    def __init__(self, loader, batch_metrics, epoch_metrics, optimizer, loss_fn) -> None:
         super().__init__()
         self.loader = loader
         self.batch_metrics = batch_metrics if isinstance(
             batch_metrics, list) else [batch_metrics]
         self.epoch_metrics = epoch_metrics if isinstance(
             epoch_metrics, list) else [epoch_metrics]
+        self.optimizer = optimizer
+        self.loss_fn = loss_fn
 
-    def train(self, model, optimizer, loss_fn) -> None:
+    def train(self, model) -> None:
         print(f"Trainer.train")
         model.train()
 
@@ -78,12 +74,12 @@ class Trainer(RunnerMediator):
 
             # Forward
             scores = model(data)
-            self.loss = loss_fn(scores, targets)
+            self.loss = self.loss_fn(scores, targets)
 
             # Backward
-            optimizer.zero_grad()
+            self.optimizer.zero_grad()
             self.loss.backward()
-            optimizer.step()
+            self.optimizer.step()
 
             with torch.no_grad():
                 for metric in self.batch_metrics:
@@ -104,7 +100,10 @@ class Validator(RunnerMediator):
     def __init__(self, loader, metrics) -> None:
         super().__init__()
         self.loader = loader
-        self.metrics = metrics if isinstance(metrics, list) else [metrics]
+        self.batch_metrics = batch_metrics if isinstance(
+            batch_metrics, list) else [batch_metrics]
+        self.epoch_metrics = epoch_metrics if isinstance(
+            epoch_metrics, list) else [epoch_metrics]
 
     def train() -> None:
         pass
@@ -119,6 +118,10 @@ class Validator(RunnerMediator):
                 targets = targets.to(self.device)
                 scores = model(data)
 
-            for metric in self.metrics:
+                for metric in self.batch_metrics:
+                    metric.calculate(scores, targets)
+                    metric.notify()
+
+            for metric in self.epoch_metrics:
                 metric.calculate(scores, targets)
                 metric.notify()
