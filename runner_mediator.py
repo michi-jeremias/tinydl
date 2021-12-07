@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 import torch
 from tqdm import tqdm
 
-from deeplearning.metric import Metric
-from deeplearning.modelinit import init_normal
+from tinydl.metric import Metric
+from tinydl.modelinit import init_normal
 
 
 class RunnerMediator(ABC):
