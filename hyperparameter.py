@@ -9,10 +9,10 @@ class Hyperparameter():
         self.hparam = {}
         for key, value in hparam.items():
             self.hparam[key] = value if isinstance(value, list) else [value]
-        self.experiments = self.generate_experiments(self.hparam)
+        self.experiments = self._generate_experiments(self.hparam)
         self.num_experiments = len(self.experiments)
 
-    def generate_experiments(self, hparam: dict) -> None:
+    def _generate_experiments(self, hparam: dict) -> None:
         """Generate all permutations of hyperparameters from self.hparam"""
         keys, values = zip(*hparam.items())
         experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
