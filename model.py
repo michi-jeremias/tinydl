@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from deeplearning.modelinit import init_normal, init_xavier
+from tinydl.modelinit import init_normal, init_xavier
 
 
 class Model():
