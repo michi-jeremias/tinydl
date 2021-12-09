@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from torch.utils.tensorboard import SummaryWriter
+from tinydl import Metric
 
 
 class Reporter(ABC):
@@ -7,14 +8,14 @@ class Reporter(ABC):
 
     @abstractmethod
     def notify():
-        """Receive notifications from metrics."""
+        """Receive notifications from metrics and report them."""
 
 
 class ConsoleReporter(Reporter):
     """The ConsoleReporter prints the name and value of a metric
     the console."""
 
-    def __init__(self, name=None) -> None:
+    def __init__(self, name: str = None) -> None:
         self.name = name if name else "ConsoleReporter"
 
     def notify(self, metric, *args):
@@ -23,7 +24,7 @@ class ConsoleReporter(Reporter):
 
 class TensorboardScalarReporter(Reporter):
 
-    def __init__(self, name=None, log_dir=None) -> None:
+    def __init__(self, name: str = None, log_dir: str = None) -> None:
         self.name = name if name else "TensorboardScalarReporter"
         self.log_dir = log_dir
         self.writer = SummaryWriter(log_dir=self.log_dir)
@@ -44,7 +45,7 @@ class TensorboardHparamReporter(Reporter):
     tensorboard.SummaryWriter().add_hparams() with the name and value of
     the metric."""
 
-    def __init__(self, name=None, hparam: dict = {}) -> None:
+    def __init__(self, name: str = None, hparam: dict = {}) -> None:
         self.name = name if name else "TensorboardHparamReporter"
         self.hparam = hparam
         dir_name = "_".join(
@@ -53,8 +54,7 @@ class TensorboardHparamReporter(Reporter):
         self.writer = SummaryWriter(log_dir=self.log_dir)
         self.step = 0
 
-    def notify(self, metric, *args):
-        # print("notify tb logger")
+    def notify(self, metric: Metric, *args):
 
         self.writer.add_scalar(
             metric.name,

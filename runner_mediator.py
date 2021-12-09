@@ -23,35 +23,6 @@ class RunnerMediator(ABC):
         """To be implemented by a Validator()"""
 
 
-class Runner(RunnerMediator):
-    """This is a mediator that operates with its colleagues Trainer and
-    Validator."""
-
-    def __init__(self, model, trainer=None: Trainer,
-                 validator=None: Validator) -> None:
-        super().__init__()
-        self.model = model.to(self.device)
-        self.trainer = trainer
-        self.validator = validator
-
-    def train(self) -> None:
-        try:
-            self.trainer.train(self.model, self.optimizer, self.loss_fn)
-        except AttributeError:
-            print("No trainer in runner.")
-
-    def validate(self) -> None:
-        try:
-            self.validator.validate(self.model)
-        except AttributeError:
-            print("No validator in runner.")
-
-    def run(self, num_epochs=1) -> None:
-        for _ in range(num_epochs):
-            self.train()
-            self.validate()
-
-
 class Trainer(RunnerMediator):
 
     def __init__(self, loader, batch_metrics, epoch_metrics, optimizer, loss_fn) -> None:
@@ -64,8 +35,9 @@ class Trainer(RunnerMediator):
         self.optimizer = optimizer
         self.loss_fn = loss_fn
 
-    def train(self, model) -> None:
-        print(f"Trainer.train")
+    def train(self,
+              model: torch.nn.Module) -> None:
+
         model.train()
 
         for batch_idx, (data, targets) in tqdm(enumerate(self.loader)):
@@ -97,7 +69,10 @@ class Trainer(RunnerMediator):
 
 class Validator(RunnerMediator):
 
-    def __init__(self, loader, metrics) -> None:
+    def __init__(self,
+                 loader: torch.utils.data.DataLoader,
+                 batch_metrics: list(Metric),
+                 epoch_metrics: list(Metric)) -> None:
         super().__init__()
         self.loader = loader
         self.batch_metrics = batch_metrics if isinstance(
@@ -108,8 +83,9 @@ class Validator(RunnerMediator):
     def train() -> None:
         pass
 
-    def validate(self, model) -> None:
-        print("Validator.validate")
+    def validate(self,
+                 model: torch.nn.Module) -> None:
+
         model.eval()
 
         with torch.no_grad():
@@ -125,3 +101,34 @@ class Validator(RunnerMediator):
             for metric in self.epoch_metrics:
                 metric.calculate(scores, targets)
                 metric.notify()
+
+
+class Runner(RunnerMediator):
+    """This is a mediator that operates with its colleagues Trainer and
+    Validator."""
+
+    def __init__(self,
+                 model: torch.nn.Module,
+                 trainer: Trainer = None,
+                 validator: Validator = None) -> None:
+        super().__init__()
+        self.model = model.to(self.device)
+        self.trainer = trainer
+        self.validator = validator
+
+    def train(self) -> None:
+        try:
+            self.trainer.train(self.model, self.optimizer, self.loss_fn)
+        except AttributeError:
+            print("No trainer in runner.")
+
+    def validate(self) -> None:
+        try:
+            self.validator.validate(self.model)
+        except AttributeError:
+            print("No validator in runner.")
+
+    def run(self, num_epochs=1) -> None:
+        for _ in range(num_epochs):
+            self.train()
+            self.validate()
