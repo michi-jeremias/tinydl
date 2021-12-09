@@ -31,7 +31,6 @@ class TensorboardScalarReporter(Reporter):
         self.step = 0
 
     def notify(self, metric, *args):
-        print("notify tb logger")
         self.writer.add_scalar(
             metric.name,
             scalar_value=metric.value,
