@@ -4,7 +4,6 @@
 __pycache__
 logs
 data/
-refactor/
 auxiliary/
 build/
 dist/
