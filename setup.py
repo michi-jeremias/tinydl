@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 
 setuptools.setup(
-    name='tiny-dl',
+    name='tinydl',
     version='0.1',
     scripts=[],
     author="Michael Jeremias",
@@ -13,7 +13,7 @@ setuptools.setup(
     description="A Python library for deeplearning",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/michi-jeremias/tiny-dl",
+    url="https://github.com/michi-jeremias/tinydl",
     packages=setuptools.find_packages(),
     classifiers=[
          "Programming Language :: Python :: 3",
