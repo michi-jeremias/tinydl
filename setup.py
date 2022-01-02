@@ -22,7 +22,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
-        "License :: OSI Approved :: MIT",   # Again, pick a license
+        "License :: OSI Approved :: MIT License",   # Again, pick a license
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
