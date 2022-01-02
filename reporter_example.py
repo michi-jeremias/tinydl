@@ -1,5 +1,5 @@
 #  from deeplearning.reporter import TensorboardHparamReporter
-from deeplearning.metric import DummyMetric
+from tinydl.metric import DummyMetric
 from torch.utils.tensorboard import SummaryWriter
 
 LOGDIR = "runs/"
