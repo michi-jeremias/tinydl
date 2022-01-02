@@ -9,12 +9,13 @@ setup(
     author_email='michael.jeremias.home@gmail.com',
     url='https://github.com/michi-jeremias/tinydl',
     # I explain this later on
-    download_url='https://github.com/user/reponame/archive/v_01.tar.gz',
+    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.1.tar.gz',
     # Keywords that define your package best
     keywords=['deep', 'learning', 'pytorch', 'training'],
     install_requires=[            # I get to this in a second
-        'validators',
-        'beautifulsoup4',
+        'torch',
+        'sklearn',
+        'tqdm'
     ],
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
