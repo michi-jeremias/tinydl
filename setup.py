@@ -9,7 +9,7 @@ setup(
     author_email='michael.jeremias.home@gmail.com',
     url='https://github.com/michi-jeremias/tinydl',
     # I explain this later on
-    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.1.tar.gz',
+    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.1.1.tar.gz',
     # Keywords that define your package best
     keywords=['deep', 'learning', 'pytorch', 'training'],
     install_requires=[            # I get to this in a second
