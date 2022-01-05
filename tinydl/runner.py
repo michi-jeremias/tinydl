@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import List
 
 import torch
 from tqdm import tqdm
 
-from tinydl.hyperparameter import Hyperparameter
+# from tinydl.hyperparameter import Hyperparameter
 from tinydl.metric import Metric
-from tinydl.modelinit import init_normal
+# from tinydl.modelinit import init_normal
 
 
 class RunnerMediator(ABC):
@@ -25,7 +26,13 @@ class RunnerMediator(ABC):
 
 class Trainer(RunnerMediator):
 
-    def __init__(self, loader, batch_metrics, epoch_metrics, optimizer, loss_fn) -> None:
+    def __init__(self,
+                 loader: torch.utils.data.DataLoader,
+                 optimizer,
+                 loss_fn,
+                 batch_metrics: List[Metric] = None,
+                 epoch_metrics: List[Metric] = None,
+                 ) -> None:
         super().__init__()
         self.loader = loader
         self.batch_metrics = batch_metrics if isinstance(
@@ -54,14 +61,14 @@ class Trainer(RunnerMediator):
             self.optimizer.step()
 
             with torch.no_grad():
-                for metric in self.batch_metrics:
-                    metric.calculate(scores, targets)
-                    metric.notify()
+                for batch_metric in self.batch_metrics:
+                    batch_metric.calculate(scores, targets)
+                    batch_metric.notify()
 
         with torch.no_grad():
-            for metric in self.epoch_metrics:
-                metric.calculate(scores, targets)
-                metric.notify()
+            for epoch_metric in self.epoch_metrics:
+                epoch_metric.calculate(scores, targets)
+                epoch_metric.notify()
 
     def validate() -> None:
         pass
@@ -71,8 +78,10 @@ class Validator(RunnerMediator):
 
     def __init__(self,
                  loader: torch.utils.data.DataLoader,
-                 batch_metrics: list(Metric),
-                 epoch_metrics: list(Metric)) -> None:
+                 batch_metrics: List[Metric] = None,
+                 epoch_metrics: List[Metric] = None,
+                 ) -> None:
+
         super().__init__()
         self.loader = loader
         self.batch_metrics = batch_metrics if isinstance(
@@ -94,13 +103,13 @@ class Validator(RunnerMediator):
                 targets = targets.to(self.device)
                 scores = model(data)
 
-                for metric in self.batch_metrics:
-                    metric.calculate(scores, targets)
-                    metric.notify()
+                for batch_metric in self.batch_metrics:
+                    batch_metric.calculate(scores, targets)
+                    batch_metric.notify()
 
-            for metric in self.epoch_metrics:
-                metric.calculate(scores, targets)
-                metric.notify()
+            for epoch_metric in self.epoch_metrics:
+                epoch_metric.calculate(scores, targets)
+                epoch_metric.notify()
 
 
 class Runner(RunnerMediator):
@@ -109,7 +118,7 @@ class Runner(RunnerMediator):
 
     def __init__(self,
                  model: torch.nn.Module,
-                 trainer: Trainer = None,
+                 trainer: Trainer,
                  validator: Validator = None) -> None:
         super().__init__()
         self.model = model.to(self.device)
@@ -118,15 +127,15 @@ class Runner(RunnerMediator):
 
     def train(self) -> None:
         try:
-            self.trainer.train(self.model, self.optimizer, self.loss_fn)
-        except AttributeError:
-            print("No trainer in runner.")
+            self.trainer.train(self.model)
+        except AttributeError as e:
+            print(e)
 
     def validate(self) -> None:
         try:
             self.validator.validate(self.model)
-        except AttributeError:
-            print("No validator in runner.")
+        except AttributeError as e:
+            print(e)
 
     def run(self, num_epochs=1) -> None:
         for _ in range(num_epochs):
