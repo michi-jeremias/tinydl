@@ -30,8 +30,8 @@ class Trainer(RunnerMediator):
                  loader: torch.utils.data.DataLoader,
                  optimizer,
                  loss_fn,
-                 batch_metrics: List[Metric] = None,
-                 epoch_metrics: List[Metric] = None,
+                 batch_metrics: List[Metric] = [],
+                 epoch_metrics: List[Metric] = [],
                  ) -> None:
         super().__init__()
         self.loader = loader
@@ -61,14 +61,16 @@ class Trainer(RunnerMediator):
             self.optimizer.step()
 
             with torch.no_grad():
-                for batch_metric in self.batch_metrics:
-                    batch_metric.calculate(scores, targets)
-                    batch_metric.notify()
+                if self.batch_metrics:
+                    for batch_metric in self.batch_metrics:
+                        batch_metric.calculate(scores, targets)
+                        batch_metric.notify()
 
         with torch.no_grad():
-            for epoch_metric in self.epoch_metrics:
-                epoch_metric.calculate(scores, targets)
-                epoch_metric.notify()
+            if self.epoch_metrics:
+                for epoch_metric in self.epoch_metrics:
+                    epoch_metric.calculate(scores, targets)
+                    epoch_metric.notify()
 
     def validate() -> None:
         pass
@@ -78,8 +80,8 @@ class Validator(RunnerMediator):
 
     def __init__(self,
                  loader: torch.utils.data.DataLoader,
-                 batch_metrics: List[Metric] = None,
-                 epoch_metrics: List[Metric] = None,
+                 batch_metrics: List[Metric] = [],
+                 epoch_metrics: List[Metric] = [],
                  ) -> None:
 
         super().__init__()
@@ -103,13 +105,15 @@ class Validator(RunnerMediator):
                 targets = targets.to(self.device)
                 scores = model(data)
 
-                for batch_metric in self.batch_metrics:
-                    batch_metric.calculate(scores, targets)
-                    batch_metric.notify()
+                if self.batch_metrics:
+                    for batch_metric in self.batch_metrics:
+                        batch_metric.calculate(scores, targets)
+                        batch_metric.notify()
 
-            for epoch_metric in self.epoch_metrics:
-                epoch_metric.calculate(scores, targets)
-                epoch_metric.notify()
+            if self.epoch_metrics:
+                for epoch_metric in self.epoch_metrics:
+                    epoch_metric.calculate(scores, targets)
+                    epoch_metric.notify()
 
 
 class Runner(RunnerMediator):
@@ -132,10 +136,11 @@ class Runner(RunnerMediator):
             print(e)
 
     def validate(self) -> None:
-        try:
-            self.validator.validate(self.model)
-        except AttributeError as e:
-            print(e)
+        if self.validator:
+            try:
+                self.validator.validate(self.model)
+            except AttributeError as e:
+                print(e)
 
     def run(self, num_epochs=1) -> None:
         for _ in range(num_epochs):
