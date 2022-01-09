@@ -3,15 +3,15 @@ from abc import ABC, abstractmethod
 import sklearn.metrics
 # from torch.nn import BCELoss
 from torch.nn import BCELoss
-import torch
 
 
 class Metric(ABC):
     """Interface for a Metric. The metric gets reported through a
     Reporter."""
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = None) -> None:
         self._reporters = set()
+        self.name = name
 
     def subscribe(self, reporter) -> None:
         """Subscribe to a Reporter().
@@ -37,9 +37,9 @@ class Metric(ABC):
 
 class DummyMetric(Metric):
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = None) -> None:
         super().__init__()
-        self.name = "Dummy Metric"
+        self.name = "Dummy Metric" if not name else name
         self.value = 1.
 
     def notify(self, *args) -> None:
@@ -53,9 +53,9 @@ class DummyMetric(Metric):
 
 class RocAuc(Metric):
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = None) -> None:
         super().__init__()
-        self.name = "ROC_AUC"
+        self.name = "ROC_AUC" if not name else name
         self.value = -1.
 
     def notify(self, *args) -> None:
@@ -69,9 +69,9 @@ class RocAuc(Metric):
 
 class BinaryCrossentropy(Metric):
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = None) -> None:
         super().__init__()
-        self.name = "BCE"
+        self.name = "BCE" if not name else name
         self.value = -1.
         self.bce_loss = BCELoss()
 
