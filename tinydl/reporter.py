@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from torch.utils.tensorboard import SummaryWriter
 
 from tinydl.metric import Metric
+from tinydl.stage import Stage
 
 
 class Reporter(ABC):
@@ -20,8 +21,9 @@ class ConsoleReporter(Reporter):
     def __init__(self, name: str = None) -> None:
         self.name = name if name else "ConsoleReporter"
 
-    def notify(self, metric, *args):
-        print(f"({self.name}) {metric.name}: {metric.value}")
+    def notify(self, metric: Metric, stage: Stage, *args):
+        print(
+            f"({self.name}) Stage: {stage.name}, Metric {metric.name}: {metric.value:.6f}")
 
 
 # class TensorboardScalarReporter(Reporter):
@@ -46,16 +48,18 @@ class TensorboardHparamReporter(Reporter):
     tensorboard.SummaryWriter().add_hparams() with the name and value of
     the metric."""
 
-    def __init__(self, name: str = None, hparam: dict = {}) -> None:
+    def __init__(self,
+                 name: str = None,
+                 hparam: dict = {}) -> None:
         self.name = name if name else "TensorboardHparamReporter"
         self.hparam = hparam
-        dir_name = "_".join(
+        self.hparam_string = "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
-        self.log_dir = "runs/" + dir_name
-        self.writer = SummaryWriter(log_dir=self.log_dir)
         self.step = 0
 
-    def notify(self, metric: Metric, *args):
+    def notify(self, metric: Metric, stage: Stage, *args):
+        self.log_dir = "runs/" + stage.name + "_" + self.hparam_string
+        self.writer = SummaryWriter(log_dir=self.log_dir)
 
         self.writer.add_scalar(
             metric.name,
