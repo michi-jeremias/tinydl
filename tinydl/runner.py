@@ -4,9 +4,8 @@ from typing import List
 import torch
 from tqdm import tqdm
 
-# from tinydl.hyperparameter import Hyperparameter
 from tinydl.metric import Metric
-# from tinydl.modelinit import init_normal
+from tinydl.stage import Stage
 
 
 class RunnerMediator(ABC):
@@ -41,6 +40,7 @@ class Trainer(RunnerMediator):
             epoch_metrics, list) else [epoch_metrics]
         self.optimizer = optimizer
         self.loss_fn = loss_fn
+        self.stage = Stage.TRAIN
 
     def train(self,
               model: torch.nn.Module) -> None:
@@ -70,7 +70,7 @@ class Trainer(RunnerMediator):
             if self.epoch_metrics:
                 for epoch_metric in self.epoch_metrics:
                     epoch_metric.calculate(scores, targets)
-                    epoch_metric.notify()
+                    epoch_metric.notify(self.stage)
 
     def validate() -> None:
         pass
@@ -90,6 +90,7 @@ class Validator(RunnerMediator):
             batch_metrics, list) else [batch_metrics]
         self.epoch_metrics = epoch_metrics if isinstance(
             epoch_metrics, list) else [epoch_metrics]
+        self.stage = Stage.VALIDATION
 
     def train() -> None:
         pass
@@ -113,7 +114,7 @@ class Validator(RunnerMediator):
             if self.epoch_metrics:
                 for epoch_metric in self.epoch_metrics:
                     epoch_metric.calculate(scores, targets)
-                    epoch_metric.notify()
+                    epoch_metric.notify(self.stage)
 
 
 class Runner(RunnerMediator):
