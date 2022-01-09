@@ -7,3 +7,4 @@ class Stage(Enum):
     TRAIN = auto()
     VALIDATION = auto()
     TEST = auto()
+    UNDEFINED = auto()
