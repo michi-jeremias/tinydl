@@ -64,7 +64,7 @@ class Trainer(RunnerMediator):
                 if self.batch_metrics:
                     for batch_metric in self.batch_metrics:
                         batch_metric.calculate(scores, targets)
-                        batch_metric.notify()
+                        batch_metric.notify(self.stage)
 
         with torch.no_grad():
             if self.epoch_metrics:
@@ -109,7 +109,7 @@ class Validator(RunnerMediator):
                 if self.batch_metrics:
                     for batch_metric in self.batch_metrics:
                         batch_metric.calculate(scores, targets)
-                        batch_metric.notify()
+                        batch_metric.notify(self.stage)
 
             if self.epoch_metrics:
                 for epoch_metric in self.epoch_metrics:
