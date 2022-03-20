@@ -26,47 +26,58 @@ class ConsoleReporter(Reporter):
             f"({self.name}) Stage: {stage.name}, Metric {metric.name}: {metric.value:.6f}")
 
 
-# class TensorboardScalarReporter(Reporter):
+class TensorboardScalarReporter(Reporter):
 
-#     def __init__(self, name: str = None, log_dir: str = None) -> None:
-#         self.name = name if name else "TensorboardScalarReporter"
-#         self.log_dir = log_dir
-#         self.writer = SummaryWriter(log_dir=self.log_dir)
-#         self.step = 0
+    def __init__(self,
+                 name: str = None,
+                 hparam: dict = {}) -> None:
+        self.name = name if name else "TensorboardScalarReporter"
+        self.hparam = hparam
+        self.hparam_string = "_".join(
+            [f"{key}_{self.hparam[key]}" for key in self.hparam])
+        # self.log_dir = "runs/" + stage.name + "_" + self.hparam_string
+        print(self.hparam_string)
+        self.log_dir = "runs/" + "TRAIN" + "_" + self.hparam_string
+        print(self.log_dir)
+        self.writer = SummaryWriter(log_dir=self.log_dir)
 
-#     def notify(self, metric, *args):
-#         self.writer.add_scalar(
-#             metric.name,
-#             scalar_value=metric.value,
-#             global_step=self.step
-#         )
-#         self.step += 1
+        self.step = 0
+
+    def notify(self, metric, stage: Stage, *args):
+        self.writer.add_scalar(
+            metric.name,
+            scalar_value=metric.value,
+            global_step=self.step
+        )
+        self.step += 1
 
 
 class TensorboardHparamReporter(Reporter):
     """The TensorboardHparamReporter calls
     tensorboard.SummaryWriter().add_hparams() with the name and value of
-    the metric."""
+    the metric. Use after the Runner() is finished!"""
 
     def __init__(self,
                  name: str = None,
                  hparam: dict = {}) -> None:
         self.name = name if name else "TensorboardHparamReporter"
         self.hparam = hparam
-        self.hparam_string = "_".join(
+        self.hparam_string = self.name + "_" + "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
-        self.step = 0
-
-    def notify(self, metric: Metric, stage: Stage, *args):
-        self.log_dir = "runs/" + stage.name + "_" + self.hparam_string
+        # self.step = 0
+        # self.log_dir = "runs/" + stage.name + "_" + self.hparam_string
+        self.log_dir = "runs/" + "TRAIN" + "_" + self.hparam_string
         self.writer = SummaryWriter(log_dir=self.log_dir)
 
-        self.writer.add_scalar(
-            metric.name,
-            scalar_value=metric.value,
-            global_step=self.step
-        )
+    def notify(self, metric_dict, stage: Stage, *args):
+        # self.writer.add_scalar(
+        #     metric.name,
+        #     scalar_value=metric.value,
+        #     global_step=self.step
+        # )
         self.writer.add_hparams(
             hparam_dict=self.hparam,
-            metric_dict={f"{metric.name}": metric.value})
-        self.step += 1
+            metric_dict=metric_dict,
+            # metric_dict={f"{metric.name}": metric.value},
+        )
+        # self.step += 1
