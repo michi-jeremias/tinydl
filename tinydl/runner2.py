@@ -166,9 +166,11 @@ class Runner2(RunnerMediator2):
                     all_targets.append(targets)
 
                 for run_reporter in self.run_reporters:
-                    run_reporter.report(stage=stage,
-                                        scores=torch.cat(tensors=all_scores),
-                                        targets=torch.cat(tensors=all_targets))
+                    if run_reporter is not None:
+                        run_reporter.report(stage=stage,
+                                            scores=torch.cat(
+                                                tensors=all_scores),
+                                            targets=torch.cat(tensors=all_targets))
 
         if self.run_reporters and self.validator:
 
