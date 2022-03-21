@@ -62,22 +62,13 @@ class TensorboardHparamReporter(Reporter):
                  hparam: dict = {}) -> None:
         self.name = name if name else "TensorboardHparamReporter"
         self.hparam = hparam
-        self.hparam_string = self.name + "_" + "_".join(
+        self.hparam_string = self.name + "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
-        # self.step = 0
-        # self.log_dir = "runs/" + stage.name + "_" + self.hparam_string
         self.log_dir = "runs/" + "TRAIN" + "_" + self.hparam_string
         self.writer = SummaryWriter(log_dir=self.log_dir)
 
     def notify(self, metric_dict, stage: Stage, *args):
-        # self.writer.add_scalar(
-        #     metric.name,
-        #     scalar_value=metric.value,
-        #     global_step=self.step
-        # )
         self.writer.add_hparams(
             hparam_dict=self.hparam,
             metric_dict=metric_dict,
-            # metric_dict={f"{metric.name}": metric.value},
         )
-        # self.step += 1
