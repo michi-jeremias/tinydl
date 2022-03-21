@@ -63,11 +63,11 @@ class TensorboardScalarReporter2(Reporter2):
 
         self.hparam_string = "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
-        # self.log_dir = "runs/" + stage.name + "_" + self.hparam_string
-        # print(self.hparam_string)
-        self.log_dir = "runs/" + self.stage.name + "_" + self.hparam_string
-        print(f"logdir: {self.log_dir}")
-        self.writer = SummaryWriter(log_dir=self.log_dir)
+
+        # self.log_dir = "runs/" + self.stage.name + "_" + self.hparam_string
+        # print(f"logdir: {self.log_dir}")
+        self.writer = SummaryWriter(comment=f"_{self.hparam_string}")
+        # self.writer = SummaryWriter(log_dir=self.log_dir)
 
         self.step = 0
 
@@ -80,7 +80,7 @@ class TensorboardScalarReporter2(Reporter2):
                 scalar_value=metric.value,
                 global_step=self.step
             )
-            self.step += 1
+        self.step += 1
 
 
 class TensorboardHparamReporter2(Reporter2):
@@ -98,9 +98,8 @@ class TensorboardHparamReporter2(Reporter2):
         self._metrics = set()
         self.hparam_string = "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
-        self.log_dir = "runs/" + self.stage.name + "_asd" + self.hparam_string
-        print(f"logdir: {self.log_dir}")
-        self.writer = SummaryWriter(log_dir=self.log_dir)
+        self.log_dir = "runs/" + self.stage.name + "_" + self.hparam_string
+        self.writer = SummaryWriter(comment=f"_{self.hparam_string}")
 
     def report(self, stage: Stage, scores, targets, *args):
         metric_dict = {}
@@ -108,9 +107,8 @@ class TensorboardHparamReporter2(Reporter2):
         try:
             for metric in self._metrics:
                 metric.calculate(scores, targets)
-                metric_dict[f"{stage.name}_{metric.name}"] = metric.value
+                metric_dict[f"{metric.name}_{stage.name}"] = metric.value.item()
 
-            # print(metric_dict)
             self.writer.add_hparams(
                 hparam_dict=self.hparam,
                 metric_dict=metric_dict,
