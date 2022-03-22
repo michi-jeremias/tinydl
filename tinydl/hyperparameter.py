@@ -23,5 +23,6 @@ class Hyperparameter():
         unique set of hyperparameters."""
         yield_index = 0
         while yield_index < self.num_experiments:
-            yield self.experiments[yield_index]
+            experiment = self.experiments[yield_index]
             yield_index += 1
+            yield experiment
