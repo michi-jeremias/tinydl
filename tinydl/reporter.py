@@ -18,9 +18,12 @@ class Reporter(ABC):
 
         Parameters
         ----------
-        metric : Metric() """
+        metrics : Metric() or [Metric()]"""
 
-        self._metrics.add(metric)
+        metrics = metrics if isinstance(
+            metrics, list) else [metrics]
+        for metric in metrics:
+            self._metrics.add(metric)
 
     def remove_metric(self, metric) -> None:
         """Remove a Metric().
