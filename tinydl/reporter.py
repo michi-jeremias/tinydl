@@ -54,7 +54,6 @@ class TensorboardScalarReporter(Reporter):
                  name: str = None,
                  hparam: dict = {}) -> None:
         self.name = name if name else "TensorboardScalarReporter"
-        self.stage = stage
         self.hparam = hparam
         self._metrics = set()
         self.hparam_string = "_".join(
