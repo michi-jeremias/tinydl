@@ -11,6 +11,7 @@ class Hyperparameter():
             self.hparam[key] = value if isinstance(value, list) else [value]
         self.experiments = self._generate_experiments(self.hparam)
         self.num_experiments = len(self.experiments)
+        self.yield_index = 0
 
     def _generate_experiments(self, hparam: dict) -> None:
         """Generate all permutations of hyperparameters from self.hparam"""
@@ -23,9 +24,7 @@ class Hyperparameter():
         """This generator returns an experiment. An experiment is a
         unique set of hyperparameters."""
 
-        yield_index = 0
-
-        while yield_index < self.num_experiments:
-            experiment = self.experiments[yield_index]
-            yield_index += 1
+        while self.yield_index < self.num_experiments:
+            experiment = self.experiments[self.yield_index]
+            self.yield_index += 1
             yield experiment
