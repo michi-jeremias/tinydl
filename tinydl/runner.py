@@ -4,7 +4,8 @@ from typing import List
 import torch
 from tqdm import tqdm
 
-from tinydl.metric import Metric
+# from tinydl.metric2 import Metric2
+from tinydl.reporter import Reporter2
 from tinydl.stage import Stage
 
 
@@ -29,21 +30,18 @@ class Trainer(RunnerMediator):
                  loader: torch.utils.data.DataLoader,
                  optimizer,
                  loss_fn,
-                 batch_metrics: List[Metric] = [],
-                 epoch_metrics: List[Metric] = [],
+                 batch_reporters: List[Reporter2] = [],
+                 epoch_reporters: List[Reporter2] = [],
                  ) -> None:
         super().__init__()
         self.loader = loader
-        self.batch_metrics = batch_metrics if isinstance(
-            batch_metrics, list) else [batch_metrics]
-        self.epoch_metrics = epoch_metrics if isinstance(
-            epoch_metrics, list) else [epoch_metrics]
+        self.batch_reporters = batch_reporters if isinstance(
+            batch_reporters, list) else [batch_reporters]
+        self.epoch_reporters = epoch_reporters if isinstance(
+            epoch_reporters, list) else [epoch_reporters]
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.stage = Stage.TRAIN
-
-        self.metric_values = {metric.name: metric.value
-                              for metric in self.batch_metrics + self.epoch_metrics}
 
     def train(self,
               model: torch.nn.Module) -> None:
@@ -64,16 +62,16 @@ class Trainer(RunnerMediator):
             self.optimizer.step()
 
             with torch.no_grad():
-                if self.batch_metrics:
-                    for batch_metric in self.batch_metrics:
-                        batch_metric.calculate(scores, targets)
-                        batch_metric.notify(self.stage)
+                if self.batch_reporters:
+                    for batch_reporter in self.batch_reporters:
+                        batch_reporter.report(self.stage, scores, targets)
+                        # batch_reporter.notify(self.stage)
 
         with torch.no_grad():
-            if self.epoch_metrics:
-                for epoch_metric in self.epoch_metrics:
-                    epoch_metric.calculate(scores, targets)
-                    epoch_metric.notify(self.stage)
+            if self.epoch_reporters:
+                for epoch_reporter in self.epoch_reporters:
+                    epoch_reporter.report(self.stage, scores, targets)
+                    # epoch_metric.notify(self.stage)
 
     def validate() -> None:
         pass
@@ -83,16 +81,16 @@ class Validator(RunnerMediator):
 
     def __init__(self,
                  loader: torch.utils.data.DataLoader,
-                 batch_metrics: List[Metric] = [],
-                 epoch_metrics: List[Metric] = [],
+                 batch_reporters: List[Reporter2] = [],
+                 epoch_reporters: List[Reporter2] = [],
                  ) -> None:
 
         super().__init__()
         self.loader = loader
-        self.batch_metrics = batch_metrics if isinstance(
-            batch_metrics, list) else [batch_metrics]
-        self.epoch_metrics = epoch_metrics if isinstance(
-            epoch_metrics, list) else [epoch_metrics]
+        self.batch_reporters = batch_reporters if isinstance(
+            batch_reporters, list) else [batch_reporters]
+        self.epoch_reporters = epoch_reporters if isinstance(
+            epoch_reporters, list) else [epoch_reporters]
         self.stage = Stage.VALIDATION
 
     def train() -> None:
@@ -109,15 +107,15 @@ class Validator(RunnerMediator):
                 targets = targets.to(self.device)
                 scores = model(data)
 
-                if self.batch_metrics:
-                    for batch_metric in self.batch_metrics:
-                        batch_metric.calculate(scores, targets)
-                        batch_metric.notify(self.stage)
+                if self.batch_reporters:
+                    for batch_reporter in self.batch_reporters:
+                        batch_reporter.report(self.stage, scores, targets)
+                        # batch_reporter.notify(self.stage)
 
-            if self.epoch_metrics:
-                for epoch_metric in self.epoch_metrics:
-                    epoch_metric.calculate(scores, targets)
-                    epoch_metric.notify(self.stage)
+            if self.epoch_reporters:
+                for epoch_reporter in self.epoch_reporters:
+                    epoch_reporter.calculate(self.stage, scores, targets)
+                    # epoch_metric.notify(self.stage)
 
 
 class Runner(RunnerMediator):
@@ -128,13 +126,13 @@ class Runner(RunnerMediator):
                  model: torch.nn.Module,
                  trainer: Trainer,
                  validator: Validator = None,
-                 run_metrics: List[Metric] = None) -> None:
+                 run_reporters: List[Reporter2] = None) -> None:
         super().__init__()
         self.model = model.to(self.device)
         self.trainer = trainer
         self.validator = validator
-        self.run_metrics = run_metrics if isinstance(
-            run_metrics, list) else [run_metrics]
+        self.run_reporters = run_reporters if isinstance(
+            run_reporters, list) else [run_reporters]
 
     def train(self) -> None:
         try:
@@ -156,51 +154,37 @@ class Runner(RunnerMediator):
             self.train()
             self.validate()
 
-        with torch.no_grad():
-            self.metrics_dict = {}
-
-            if self.trainer:
-                # for metric in self.run_metrics:
-                #     self.metrics_dict[metric.name + "_TRAIN"] = 0
-
-                total_size = len(self.trainer.loader.dataset)
+        if self.run_reporters and self.trainer:
+            stage = Stage.TRAIN
+            with torch.no_grad():
                 self.model.eval()
                 all_scores = []
                 all_targets = []
 
                 for data, targets in self.trainer.loader:
-                    current_batch_size = len(data)
                     all_scores.append(self.model(data))
                     all_targets.append(targets)
 
-                for metric in self.run_metrics:
-                    self.metrics_dict[metric.name + "_TRAIN"] = metric.calculate(
-                        torch.cat(tensors=all_scores), torch.cat(tensors=all_targets))
-                    metric.notify(self.metrics_dict)
+                for run_reporter in self.run_reporters:
+                    if run_reporter is not None:
+                        run_reporter.report(stage=stage,
+                                            scores=torch.cat(
+                                                tensors=all_scores),
+                                            targets=torch.cat(tensors=all_targets))
 
-            if self.validator:
-                for metric in self.run_metrics:
-                    self.metrics_dict[metric.name + "_VALID"] = 0
+        if self.run_reporters and self.validator:
 
-                total_size = len(self.validator.loader.dataset)
+            stage = Stage.VALID
+            all_scores = []
+            all_targets = []
+            with torch.no_grad():
                 self.model.eval()
 
                 for data, targets in self.validator.loader:
-                    current_batch_size = len(data)
-                    scores = self.model(data)
+                    all_scores.append(self.model(data))
+                    all_targets.append(targets)
 
-                    for metric in self.run_metrics:
-                        self.metrics_dict[metric.name + "_VALID"] += metric.calculate(
-                            scores, targets) * current_batch_size / total_size
-
-            # if self.trainer:
-            #     train_metrics_values = {
-            #         metric.name + self.trainer.stage metric.value
-            #         for metric in self.trainer.epoch_metrics + self.trainer.batch_metrics
-            #         if metric is not None}
-
-            # if self.validator:
-            #     valid_metrics_values = {
-            #         metric.name + self.validator.stage: metric.value
-            #         for metric in self.validator.epoch_metrics + self.validator.batch_metrics
-            #         if metric is not None}
+                for run_reporter in self.run_reporters:
+                    run_reporter.report(stage, scores, targets)
+                    run_reporter.report(stage, torch.cat(
+                        tensors=all_scores), torch.cat(tensors=all_targets))

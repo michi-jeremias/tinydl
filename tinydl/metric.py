@@ -10,7 +10,6 @@ class Metric(ABC):
     Reporter."""
 
     def __init__(self, name: str = None) -> None:
-        self._reporters = set()
         self.name = name
 
     def subscribe(self, reporter) -> None:
@@ -33,6 +32,23 @@ class Metric(ABC):
     @abstractmethod
     def notify():
         """Push a message to the Reporter()."""
+
+
+class BinaryCrossentropy(Metric):
+
+    def __init__(self, name: str = None) -> None:
+        super().__init__()
+        self.name = "BCE" if not name else name
+        self.value = -1.
+        self.bce_loss = BCELoss()
+
+    def notify(self, *args) -> None:
+        """Sends the name and last value of the metric to the reporter."""
+        for reporter in self._reporters:
+            reporter.notify(self, *args)
+
+    def calculate(self, scores, targets) -> None:
+        self.value = self.bce_loss(scores, targets)
 
 
 class DummyMetric(Metric):
@@ -65,20 +81,3 @@ class RocAuc(Metric):
 
     def calculate(self, scores, targets) -> None:
         self.value = sklearn.metrics.roc_auc_score(targets, scores)
-
-
-class BinaryCrossentropy(Metric):
-
-    def __init__(self, name: str = None) -> None:
-        super().__init__()
-        self.name = "BCE" if not name else name
-        self.value = -1.
-        self.bce_loss = BCELoss()
-
-    def notify(self, *args) -> None:
-        """Sends the name and last value of the metric to the reporter."""
-        for reporter in self._reporters:
-            reporter.notify(self, *args)
-
-    def calculate(self, scores, targets) -> None:
-        self.value = self.bce_loss(scores, targets)
