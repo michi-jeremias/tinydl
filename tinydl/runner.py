@@ -4,8 +4,7 @@ from typing import List
 import torch
 from tqdm import tqdm
 
-# from tinydl.metric2 import Metric2
-from tinydl.reporter import Reporter2
+from tinydl.reporter import Reporter
 from tinydl.stage import Stage
 
 
@@ -30,8 +29,8 @@ class Trainer(RunnerMediator):
                  loader: torch.utils.data.DataLoader,
                  optimizer,
                  loss_fn,
-                 batch_reporters: List[Reporter2] = [],
-                 epoch_reporters: List[Reporter2] = [],
+                 batch_reporters: List[Reporter] = [],
+                 epoch_reporters: List[Reporter] = [],
                  ) -> None:
         super().__init__()
         self.loader = loader
@@ -81,8 +80,8 @@ class Validator(RunnerMediator):
 
     def __init__(self,
                  loader: torch.utils.data.DataLoader,
-                 batch_reporters: List[Reporter2] = [],
-                 epoch_reporters: List[Reporter2] = [],
+                 batch_reporters: List[Reporter] = [],
+                 epoch_reporters: List[Reporter] = [],
                  ) -> None:
 
         super().__init__()
@@ -126,7 +125,7 @@ class Runner(RunnerMediator):
                  model: torch.nn.Module,
                  trainer: Trainer,
                  validator: Validator = None,
-                 run_reporters: List[Reporter2] = None) -> None:
+                 run_reporters: List[Reporter] = None) -> None:
         super().__init__()
         self.model = model.to(self.device)
         self.trainer = trainer
