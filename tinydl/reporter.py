@@ -13,8 +13,8 @@ class Reporter(ABC):
     def report():
         """Receive values from metrics and report them."""
 
-    def subscribe(self, metric) -> None:
-        """Subscribe to a Metric().
+    def add_metric(self, metric) -> None:
+        """Add a Metric().
 
         Parameters
         ----------
@@ -22,8 +22,8 @@ class Reporter(ABC):
 
         self._metrics.add(metric)
 
-    def unsubscribe(self, metric) -> None:
-        """Unsubscribe from a Metric().
+    def remove_metric(self, metric) -> None:
+        """Remove a Metric().
 
         Parameters
         ----------
