@@ -13,7 +13,7 @@ class Reporter(ABC):
     def report():
         """Receive values from metrics and report them."""
 
-    def add_metric(self, metric) -> None:
+    def add_metrics(self, metrics) -> None:
         """Add a Metric().
 
         Parameters
