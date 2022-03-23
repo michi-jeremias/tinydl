@@ -14,17 +14,17 @@ class Hyperparameter():
 
     def _generate_experiments(self, hparam: dict) -> None:
         """Generate all permutations of hyperparameters from self.hparam"""
-        
+
         keys, values = zip(*hparam.items())
         experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
         return experiments
 
-    def get_experiment(self) -> dict:
+    def get_experiments(self) -> dict:
         """This generator returns an experiment. An experiment is a
         unique set of hyperparameters."""
-        
+
         yield_index = 0
-        
+
         while yield_index < self.num_experiments:
             experiment = self.experiments[yield_index]
             yield_index += 1
