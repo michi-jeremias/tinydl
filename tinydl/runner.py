@@ -110,7 +110,7 @@ class Validator(RunnerMediator):
 
             if self.epoch_reporters:
                 for epoch_reporter in self.epoch_reporters:
-                    epoch_reporter.calculate(self.stage, scores, targets)
+                    epoch_reporter.report(self.stage, scores, targets)
 
 
 class Runner(RunnerMediator):
@@ -169,7 +169,7 @@ class Runner(RunnerMediator):
                                             targets=torch.cat(tensors=all_targets))
 
         if self.run_reporters and self.validator:
-            stage = Stage.VALID
+            stage = Stage.VALIDATION
 
             with torch.no_grad():
                 self.model.eval()
