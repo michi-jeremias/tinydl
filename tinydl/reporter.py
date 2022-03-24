@@ -45,10 +45,15 @@ class ConsoleReporter(Reporter):
 
     def report(self, stage: Stage, scores, targets, *args):
 
-        for metric in self._metrics:
-            metric.calculate(scores, targets)
-            print(
-                f"({self.name}) Stage: {stage.name}, Metric {metric.name}: {metric.value:.6f}")
+        try:
+            for metric in self._metrics:
+                metric.calculate(scores, targets)
+                print(
+                    f"({self.name}) Stage: {stage.name}, Metric {metric.name}: {metric.value:.6f}")
+
+        except Exception as e:
+            print(f"Something went wrong with a metric in {self.__class__}")
+            print(e)
 
 
 class TensorboardScalarReporter(Reporter):
@@ -66,14 +71,19 @@ class TensorboardScalarReporter(Reporter):
 
     def report(self, stage: Stage, scores, targets, *args):
 
-        for metric in self._metrics:
-            metric.calculate(scores, targets)
-            self.writer.add_scalar(
-                metric.name + "_" + stage.name,
-                scalar_value=metric.value,
-                global_step=self.step
-            )
-        self.step += 1
+        try:
+            for metric in self._metrics:
+                metric.calculate(scores, targets)
+                self.writer.add_scalar(
+                    metric.name + "_" + stage.name,
+                    scalar_value=metric.value,
+                    global_step=self.step
+                )
+            self.step += 1
+
+        except Exception as e:
+            print(f"Something went wrong with a metric in {self.__class__}")
+            print(e)
 
 
 class TensorboardHparamReporter(Reporter):
@@ -103,5 +113,6 @@ class TensorboardHparamReporter(Reporter):
                 hparam_dict=self.hparam,
                 metric_dict=metric_dict,
             )
-        except:
-            print("no metric in self._metrics?")
+        except Exception as e:
+            print(f"Something went wrong with a metric in {self.__class__}")
+            print(e)
