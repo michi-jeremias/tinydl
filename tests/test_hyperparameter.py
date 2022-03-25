@@ -47,9 +47,9 @@ class TestHyperparameter(unittest.TestCase):
             experiment_list.append(experiment)
 
         expected_result = [
-            {"lr": [1e-3], "bs": [128]},
-            {"lr": [1e-4], "bs": [128]},
-            {"lr": [1e-3], "bs": [256]},
-            {"lr": [1e-4], "bs": [256]},
+            {"lr": 1e-3, "bs": 128},
+            {"lr": 1e-4, "bs": 128},
+            {"lr": 1e-3, "bs": 256},
+            {"lr": 1e-4, "bs": 256},
         ]
         self.assertEqual(experiment_list, expected_result)
