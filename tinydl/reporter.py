@@ -25,13 +25,10 @@ class Reporter(ABC):
         for metric in metrics:
             self._metrics.add(metric)
 
-    def remove_metric(self, metric) -> None:
-        """Remove a Metric().
+    def flush_metrics(self) -> None:
+        """Remove all metrics."""
 
-        Parameters
-        ----------
-        metric : Metric() """
-        self._metrics.remove(metric)
+        self._metrics = set()
 
 
 class ConsoleReporter(Reporter):
