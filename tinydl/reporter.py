@@ -25,6 +25,12 @@ class Reporter(ABC):
         for metric in metrics:
             self._metrics.add(metric)
 
+    def remove_metrics(self, metrics) -> None:
+        metrics = metrics if isinstance(metrics, list) else [metrics]
+
+        for metric in metrics:
+            self._metrics.discard(metric)
+
     def flush_metrics(self) -> None:
         """Remove all metrics."""
 
@@ -37,6 +43,7 @@ class ConsoleReporter(Reporter):
 
     def __init__(self,
                  name: str = None) -> None:
+        super().__init__(self)
         self.name = name if name else "ConsoleReporter"
         self._metrics = set()
 
@@ -49,7 +56,7 @@ class ConsoleReporter(Reporter):
                     f"({self.name}) Stage: {stage.name}, Metric {metric.name}: {metric.value:.6f}")
 
         except Exception as e:
-            print(f"Something went wrong with a metric in {self.__class__}")
+            print(f"Error in {self.__class__}")
             print(e)
 
 
@@ -79,7 +86,7 @@ class TensorboardScalarReporter(Reporter):
             self.step += 1
 
         except Exception as e:
-            print(f"Something went wrong with a metric in {self.__class__}")
+            print(f"Error in {self.__class__}")
             print(e)
 
 
@@ -111,5 +118,5 @@ class TensorboardHparamReporter(Reporter):
                 metric_dict=metric_dict,
             )
         except Exception as e:
-            print(f"Something went wrong with a metric in {self.__class__}")
+            print(f"Error in {self.__class__}")
             print(e)
