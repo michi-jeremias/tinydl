@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 import sklearn.metrics
-# from torch.nn import BCELoss
 from torch.nn import BCELoss
 
 
@@ -12,26 +11,11 @@ class Metric(ABC):
     def __init__(self, name: str = None) -> None:
         self.name = name
 
-    def subscribe(self, reporter) -> None:
-        """Subscribe to a Reporter().
+    def __eq__(self, other):
+        return self.name == other.name
 
-        Parameters
-        ----------
-        reporter : Reporter() """
-
-        self._reporters.add(reporter)
-
-    def unsubscribe(self, reporter) -> None:
-        """Unsubscribe from a Reporter().
-
-        Parameters
-        ----------
-        reporter : Reporter() """
-        self._reporters.remove(reporter)
-
-    @abstractmethod
-    def notify():
-        """Push a message to the Reporter()."""
+    def __hash__(self):
+        return hash(self.name)
 
 
 class BinaryCrossentropy(Metric):
@@ -42,10 +26,11 @@ class BinaryCrossentropy(Metric):
         self.value = -1.
         self.bce_loss = BCELoss()
 
-    def notify(self, *args) -> None:
-        """Sends the name and last value of the metric to the reporter."""
-        for reporter in self._reporters:
-            reporter.notify(self, *args)
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
     def calculate(self, scores, targets) -> None:
         self.value = self.bce_loss(scores, targets)
@@ -58,10 +43,11 @@ class DummyMetric(Metric):
         self.name = "Dummy Metric" if not name else name
         self.value = 1.
 
-    def notify(self, *args) -> None:
-        """Sends the name and last value of the metric to the reporter."""
-        for reporter in self._reporters:
-            reporter.notify(self, *args)
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
     def calculate(self, scores, targets) -> None:
         self.value = self.value * 0.95
@@ -74,10 +60,11 @@ class RocAuc(Metric):
         self.name = "ROC_AUC" if not name else name
         self.value = -1.
 
-    def notify(self, *args) -> None:
-        """Sends the name and last value of the metric to the reporter."""
-        for reporter in self._reporters:
-            reporter.notify(self, *args)
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
     def calculate(self, scores, targets) -> None:
         self.value = sklearn.metrics.roc_auc_score(targets, scores)
