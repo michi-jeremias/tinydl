@@ -43,7 +43,6 @@ class ConsoleReporter(Reporter):
 
     def __init__(self,
                  name: str = None) -> None:
-        super().__init__(self)
         self.name = name if name else "ConsoleReporter"
         self._metrics = set()
 
