@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import sklearn.metrics
+from torch import Tensor
 from torch.nn import BCELoss
 
 
@@ -26,14 +27,9 @@ class BinaryCrossentropy(Metric):
         self.value = -1.
         self.bce_loss = BCELoss()
 
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def calculate(self, scores, targets) -> None:
+    def calculate(self, scores, targets) -> Tensor:
         self.value = self.bce_loss(scores, targets)
+        return self.value
 
 
 class DummyMetric(Metric):
@@ -42,12 +38,6 @@ class DummyMetric(Metric):
         super().__init__()
         self.name = "Dummy Metric" if not name else name
         self.value = 1.
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
 
     def calculate(self, scores, targets) -> None:
         self.value = self.value * 0.95
@@ -59,12 +49,6 @@ class RocAuc(Metric):
         super().__init__()
         self.name = "ROC_AUC" if not name else name
         self.value = -1.
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
 
     def calculate(self, scores, targets) -> None:
         self.value = sklearn.metrics.roc_auc_score(targets, scores)
