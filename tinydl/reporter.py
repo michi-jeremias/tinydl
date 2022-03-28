@@ -10,6 +10,10 @@ class Reporter(ABC):
     """Interface for a reporter."""
 
     @abstractmethod
+    def calculate():
+        """Triggers calculate() in a metric."""
+
+    @abstractmethod
     def report():
         """Receive values from metrics and report them."""
 
@@ -45,6 +49,15 @@ class ConsoleReporter(Reporter):
                  name: str = None) -> None:
         self.name = name if name else "ConsoleReporter"
         self._metrics = set()
+
+    def calculate(self, stage: Stage, scores, targets, *args):
+        try:
+            for metric in self._metrics:
+                metric.calculate(stage, scores, targets)
+
+        except Exception as e:
+            print(f"Error in {self.__class__}")
+            print(e)
 
     def report(self, stage: Stage, scores, targets, *args):
 
