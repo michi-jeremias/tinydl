@@ -4,18 +4,40 @@ from torch.utils.tensorboard import SummaryWriter
 
 from tinydl.metric import Metric
 from tinydl.stage import Stage
+from tinydl.report import Report
 
 
 class Reporter(ABC):
     """Interface for a reporter."""
 
-    @abstractmethod
-    def calculate():
-        """Triggers calculate() in a metric."""
+    def __init__(self) -> None:
+        self.name = "Reporter"
+        self._metrics = set()
+        self.reports = []
+
+    def __repr__(self) -> str:
+        return f"{__class__.__name__}(name: {self.name}, metrics: {self._metrics})"
 
     @abstractmethod
     def report():
-        """Receive values from metrics and report them."""
+        """Receive values from metrics and report them.
+        Must be implemented in a Reporter."""
+
+    def get_calculations(self, stage: Stage, scores, targets, *args):
+        """Triggers calculate() in a metric."""
+        try:
+            for metric in self._metrics:
+                self.reports.append(
+                    Report(
+                        metric_name=metric.name,
+                        metric_value=metric.calculate(scores, targets),
+                        stage=stage,
+                    )
+                )
+
+        except Exception as e:
+            print(f"Error in {self.__class__}")
+            print(e)
 
     def add_metrics(self, metrics) -> None:
         """Add a Metric().
@@ -33,7 +55,11 @@ class Reporter(ABC):
         metrics = metrics if isinstance(metrics, list) else [metrics]
 
         for metric in metrics:
-            self._metrics.discard(metric)
+
+            try:
+                self._metrics.discard(metric)
+            except Exception as e:
+                print(e)
 
     def flush_metrics(self) -> None:
         """Remove all metrics."""
@@ -47,29 +73,13 @@ class ConsoleReporter(Reporter):
 
     def __init__(self,
                  name: str = None) -> None:
+        super().__init__()
         self.name = name if name else "ConsoleReporter"
-        self._metrics = set()
 
-    def calculate(self, stage: Stage, scores, targets, *args):
-        try:
-            for metric in self._metrics:
-                metric.calculate(stage, scores, targets)
-
-        except Exception as e:
-            print(f"Error in {self.__class__}")
-            print(e)
-
-    def report(self, stage: Stage, scores, targets, *args):
-
-        try:
-            for metric in self._metrics:
-                metric.calculate(scores, targets)
-                print(
-                    f"({self.name}) Stage: {stage.name}, Metric {metric.name}: {metric.value:.6f}")
-
-        except Exception as e:
-            print(f"Error in {self.__class__}")
-            print(e)
+    def report(self):
+        for report in self.reports:
+            print(
+                f"({self.name}) stage: {report.stage}, metric: {report.metric_name}, value: {report.metric_value:.6f}")
 
 
 class TensorboardScalarReporter(Reporter):
@@ -85,27 +95,22 @@ class TensorboardScalarReporter(Reporter):
         self.writer = SummaryWriter(comment=f"_{self.hparam_string}")
         self.step = 0
 
-    def report(self, stage: Stage, scores, targets, *args):
-
-        try:
-            for metric in self._metrics:
-                metric.calculate(scores, targets)
-                self.writer.add_scalar(
-                    metric.name + "_" + stage.name,
-                    scalar_value=metric.value,
-                    global_step=self.step
-                )
+    def report(self):
+        for report in self.reports:
+            self.writer.add_scalar(
+                tag=report.metric_name + "_" + report.stage,
+                scalar_value=report.metric_value,
+                global_step=self.step
+            )
             self.step += 1
-
-        except Exception as e:
-            print(f"Error in {self.__class__}")
-            print(e)
 
 
 class TensorboardHparamReporter(Reporter):
     """The TensorboardHparamReporter calls
     tensorboard.SummaryWriter().add_hparams() with the name and value of
-    the metric. Use after the Runner() is finished!"""
+    the metric. Note that all metrics in writer.add_hparams() have to be
+    written at once, otherwise there might be problems with tensorboard
+    identifying metric names as intended."""
 
     def __init__(self,
                  name: str = None,
@@ -120,15 +125,11 @@ class TensorboardHparamReporter(Reporter):
     def report(self, stage: Stage, scores, targets, *args):
         metric_dict = {}
 
-        try:
-            for metric in self._metrics:
-                metric.calculate(scores, targets)
-                metric_dict[f"{metric.name}_{stage.name}"] = metric.value.item()
-
-            self.writer.add_hparams(
-                hparam_dict=self.hparam,
-                metric_dict=metric_dict,
+        for report in self.reports:
+            metric_dict[f"{report.metric_name}_{stage.name}"] = report.metric_value.item(
             )
-        except Exception as e:
-            print(f"Error in {self.__class__}")
-            print(e)
+
+        self.writer.add_hparams(
+            hparam_dict=self.hparam,
+            metric_dict=metric_dict,
+        )
