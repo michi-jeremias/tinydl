@@ -1,7 +1,10 @@
 import unittest
 
+import torch
+
 from tinydl.reporter import ConsoleReporter
 from tinydl.metric import BinaryCrossentropy, RocAuc
+from tinydl.stage import Stage
 
 
 class TestConsoleReporter(unittest.TestCase):
@@ -42,3 +45,13 @@ class TestConsoleReporter(unittest.TestCase):
         num_metrics = len(reporter._metrics)
 
         self.assertEqual(num_metrics, 0)
+
+    def test_get_calculations(self):
+        reporter = ConsoleReporter()
+        reporter.add_metrics(BinaryCrossentropy())
+        scores = torch.rand(100)
+        targets = torch.rand(100)
+        reporter.get_calculations(
+            stage=Stage.TRAIN, scores=scores, targets=targets)
+
+        self.assertEqual(len(reporter.reports), 1)
