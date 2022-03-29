@@ -12,6 +12,9 @@ class Metric(ABC):
     def __init__(self, name: str = None) -> None:
         self.name = name
 
+    def __repr__(self) -> str:
+        return f"{__class__.__name__}(name: {self.name})"
+
     def __eq__(self, other):
         return self.name == other.name
 
