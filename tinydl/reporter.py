@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from types import list
 
 from torch.utils.tensorboard import SummaryWriter
 
 from tinydl.metric import Metric
-from tinydl.stage import Stage
 from tinydl.report import Report
+from tinydl.stage import Stage
 
 
 class Reporter(ABC):
@@ -23,8 +24,8 @@ class Reporter(ABC):
         """Receive values from metrics and report them.
         Must be implemented in a Reporter."""
 
-    def get_calculations(self, stage: Stage, scores, targets, *args):
-        """Triggers calculate() in a metric."""
+    def calculate_metrics(self, stage: Stage, scores, targets, *args):
+        """Triggers Metric.calculate()."""
         try:
             for metric in self._metrics:
                 self.reports.append(
@@ -39,7 +40,7 @@ class Reporter(ABC):
             print(f"Error in {self.__class__}")
             print(e)
 
-    def add_metrics(self, metrics) -> None:
+    def add_metrics(self, metrics: list[Metric]) -> None:
         """Add a Metric().
 
         Parameters
@@ -51,7 +52,7 @@ class Reporter(ABC):
         for metric in metrics:
             self._metrics.add(metric)
 
-    def remove_metrics(self, metrics) -> None:
+    def remove_metrics(self, metrics: list[Metric]) -> None:
         metrics = metrics if isinstance(metrics, list) else [metrics]
 
         for metric in metrics:
@@ -121,15 +122,16 @@ class TensorboardHparamReporter(Reporter):
         self.hparam_string = "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
         self.writer = SummaryWriter(comment=f"_{self.hparam_string}")
+        self.metric_dict = {}
 
-    def report(self, stage: Stage, scores, targets, *args):
-        metric_dict = {}
+    def report(self):
 
         for report in self.reports:
-            metric_dict[f"{report.metric_name}_{stage.name}"] = report.metric_value.item(
+            self.metric_dict[f"{report.metric_name}_{report.stage}"] = report.metric_value.item(
             )
 
         self.writer.add_hparams(
             hparam_dict=self.hparam,
-            metric_dict=metric_dict,
+            metric_dict=self.metric_dict,
         )
+        self.metric_dict = {}
