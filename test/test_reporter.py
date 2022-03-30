@@ -51,7 +51,7 @@ class TestConsoleReporter(unittest.TestCase):
         reporter.add_metrics(BinaryCrossentropy())
         scores = torch.rand(100)
         targets = torch.rand(100)
-        reporter.get_calculations(
+        reporter.calculate_metrics(
             stage=Stage.TRAIN, scores=scores, targets=targets)
 
         self.assertEqual(len(reporter.reports), 1)
