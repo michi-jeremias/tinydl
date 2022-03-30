@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from types import list
+from typing import List
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -40,7 +40,7 @@ class Reporter(ABC):
             print(f"Error in {self.__class__}")
             print(e)
 
-    def add_metrics(self, metrics: list[Metric]) -> None:
+    def add_metrics(self, metrics: List[Metric]) -> None:
         """Add a Metric().
 
         Parameters
@@ -52,7 +52,7 @@ class Reporter(ABC):
         for metric in metrics:
             self._metrics.add(metric)
 
-    def remove_metrics(self, metrics: list[Metric]) -> None:
+    def remove_metrics(self, metrics: List[Metric]) -> None:
         metrics = metrics if isinstance(metrics, list) else [metrics]
 
         for metric in metrics:
@@ -80,7 +80,8 @@ class ConsoleReporter(Reporter):
     def report(self):
         for report in self.reports:
             print(
-                f"({self.name}) stage: {report.stage}, metric: {report.metric_name}, value: {report.metric_value:.6f}")
+                f"({self.name}) stage: {report.stage.name}, metric: {report.metric_name}, value: {report.metric_value:.6f}")
+        self.reports = []
 
 
 class TensorboardScalarReporter(Reporter):
@@ -88,9 +89,10 @@ class TensorboardScalarReporter(Reporter):
     def __init__(self,
                  name: str = None,
                  hparam: dict = {}) -> None:
+        super().__init__()
         self.name = name if name else "TensorboardScalarReporter"
         self.hparam = hparam
-        self._metrics = set()
+
         self.hparam_string = "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
         self.writer = SummaryWriter(comment=f"_{self.hparam_string}")
@@ -99,11 +101,12 @@ class TensorboardScalarReporter(Reporter):
     def report(self):
         for report in self.reports:
             self.writer.add_scalar(
-                tag=report.metric_name + "_" + report.stage,
+                tag=report.metric_name + "_" + report.stage.name,
                 scalar_value=report.metric_value,
                 global_step=self.step
             )
             self.step += 1
+        self.reports = []
 
 
 class TensorboardHparamReporter(Reporter):
@@ -116,9 +119,10 @@ class TensorboardHparamReporter(Reporter):
     def __init__(self,
                  name: str = None,
                  hparam: dict = {}) -> None:
+        super().__init__()
         self.name = name if name else "TensorboardHparamReporter"
         self.hparam = hparam
-        self._metrics = set()
+
         self.hparam_string = "_".join(
             [f"{key}_{self.hparam[key]}" for key in self.hparam])
         self.writer = SummaryWriter(comment=f"_{self.hparam_string}")
@@ -127,11 +131,12 @@ class TensorboardHparamReporter(Reporter):
     def report(self):
 
         for report in self.reports:
-            self.metric_dict[f"{report.metric_name}_{report.stage}"] = report.metric_value.item(
+            self.metric_dict[f"{report.metric_name}_{report.stage.name}"] = report.metric_value.item(
             )
 
         self.writer.add_hparams(
             hparam_dict=self.hparam,
             metric_dict=self.metric_dict,
         )
+        self.reports = []
         self.metric_dict = {}
