@@ -44,6 +44,7 @@ class DummyMetric(Metric):
 
     def calculate(self, scores, targets) -> None:
         self.value = self.value * 0.95
+        return self.value
 
 
 class RocAuc(Metric):
@@ -55,3 +56,4 @@ class RocAuc(Metric):
 
     def calculate(self, scores, targets) -> None:
         self.value = sklearn.metrics.roc_auc_score(targets, scores)
+        return self.value
