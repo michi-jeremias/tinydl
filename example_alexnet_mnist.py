@@ -1,26 +1,32 @@
-"""Example implementation of AlexNet for MNIST. Original paper: https://arxiv.org/abs/1404.5997v2"""
+"""Example implementation of AlexNet for MNIST.
+Original paper: https://arxiv.org/abs/1404.5997v2.
+Start tensorboard with 'tensorboard --logdir=runs' after all runs
+are finished."""
 
 from math import ceil
-import torch
 import torch.nn as nn
 import torchvision.datasets as datasets
 from torchvision.transforms import transforms
+import torchvision.models as models
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
 import torch.optim as optim
 
 from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
-from tinydl.metric import BinaryCrossentropy
+from tinydl.metric import CrossEntropy
 from tinydl.reporter import TensorboardScalarReporter, TensorboardHparamReporter
-from tinydl.stage import Stage
 from tinydl.hyperparameter import Hyperparameter
+from tinydl.runner import Runner, Trainer, Validator
 
 
 # Dataset
+# transform_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+
 transforms = transforms.Compose(
     [
         transforms.Resize(64),
+        transforms.Grayscale(num_output_channels=3),
         transforms.ToTensor(),
         transforms.Normalize(
             [0.5 for _ in range(1)], [0.5 for _ in range(1)]
@@ -30,7 +36,7 @@ transforms = transforms.Compose(
 
 dataset = datasets.MNIST(root="dataset/", train=True, transform=transforms,
                          download=True)
-train_set, validation_set = random_split(
+train_ds, validation_ds = random_split(
     dataset, [int(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
 
 # Loss function
@@ -42,7 +48,6 @@ hparam = {
     "batchsize": [128, 256, 512, 1024],
     "lr": [2e-3, 2e-4]
 }
-
 hyperparameter = Hyperparameter(hparam)
 
 
@@ -55,46 +60,38 @@ for experiment in hyperparameter.get_experiments():
         batch_size=experiment["batchsize"],
         shuffle=True)
     val_loader = DataLoader(
-        dataset=val_ds,
-        batch_size=experiment["batchsize"])
-    test_loader = DataLoader(
-        dataset=test_ds,
+        dataset=validation_ds,
         batch_size=experiment["batchsize"])
 
-    model = DeepConvNet(input_size=400, hidden_dim=100)
-    init_xavier(model)
+    model = models.alexnet(pretrained=False)
+    model.classifier.add_module("7", nn.Linear(
+        in_features=1000, out_features=10, bias=False))
+
     optimizer = optim.Adam(
         params=model.parameters(),
         lr=experiment["lr"],
         weight_decay=1e-4
     )
 
-    # console_reporter = ConsoleReporter()
-    # console_reporter.add_metrics([BinaryCrossentropy()])
-
     tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
-    tbscalar_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
-
-    # console_reporter_val = ConsoleReporter()
-    # console_reporter_val.add_metrics(BinaryCrossentropy())
+    tbscalar_reporter.add_metrics([CrossEntropy()])
 
     tbscalar_reporter_val = TensorboardScalarReporter(hparam=experiment)
-    tbscalar_reporter_val.add_metrics([BinaryCrossentropy(), RocAuc()])
+    tbscalar_reporter_val.add_metrics([CrossEntropy()])
 
     tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
-    tbhparam_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
+    tbhparam_reporter.add_metrics([CrossEntropy()])
 
     TRAINER = Trainer(
         loader=train_loader,
         optimizer=optimizer,
         loss_fn=loss_fn,
-        batch_reporters=tbscalar_reporter,
-        # epoch_reporters=console_reporter
+        batch_reporters=tbscalar_reporter
     )
 
     VALIDATOR = Validator(
         loader=val_loader,
-        batch_reporters=tbscalar_reporter_val,
+        batch_reporters=tbscalar_reporter_val
     )
 
     RUNNER = Runner(
@@ -105,8 +102,3 @@ for experiment in hyperparameter.get_experiments():
     )
 
     RUNNER.run(3)
-
-
-# comment mnist above and uncomment below if train on CelebA
-#dataset = datasets.ImageFolder(root="celeb_dataset", transform=transforms)
-dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
