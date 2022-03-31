@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import sklearn.metrics
 from torch import Tensor
-from torch.nn import BCELoss
+from torch.nn import BCELoss, CrossEntropyLoss
 
 
 class Metric(ABC):
@@ -36,6 +36,22 @@ class BinaryCrossentropy(Metric):
                   scores: Tensor,
                   targets: Tensor) -> Tensor:
         self.value = self.bce_loss(scores, targets)
+        return self.value
+
+
+class CrossEntropy(Metric):
+
+    def __init__(self,
+                 name: str = None) -> None:
+        super().__init__()
+        self.name = "CE" if not name else name
+        self.value = -1.
+        self.ce_loss = CrossEntropy()
+
+    def calculate(self,
+                  scores: Tensor,
+                  targets: Tensor) -> Tensor:
+        self.value = self.ce_loss(scores, targets)
         return self.value
 
 
