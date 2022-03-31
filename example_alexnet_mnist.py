@@ -1,11 +1,12 @@
 """Example implementation of AlexNet for MNIST. Original paper: https://arxiv.org/abs/1404.5997v2"""
 
-
+from math import ceil
 import torch
 import torch.nn as nn
-from torchvision.datasets import datasets
+import torchvision.datasets as datasets
 from torchvision.transforms import transforms
 from torch.utils.data import DataLoader
+from torch.utils.data.dataset import random_split
 import torch.optim as optim
 
 from tinydl.metric import BinaryCrossentropy, RocAuc
@@ -17,11 +18,23 @@ from tinydl.hyperparameter import Hyperparameter
 
 
 # Dataset
+transforms = transforms.Compose(
+    [
+        transforms.Resize(64),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.5 for _ in range(1)], [0.5 for _ in range(1)]
+        ),
+    ]
+)
+
 dataset = datasets.MNIST(root="dataset/", train=True, transform=transforms,
                          download=True)
+train_set, validation_set = random_split(
+    dataset, [int(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
 
 # Loss function
-loss_fn = nn.BCELoss()
+loss_fn = nn.CrossEntropyLoss()
 
 
 # Hyperparameters
