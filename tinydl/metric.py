@@ -46,7 +46,7 @@ class CrossEntropy(Metric):
         super().__init__()
         self.name = "CE" if not name else name
         self.value = -1.
-        self.ce_loss = CrossEntropy()
+        self.ce_loss = CrossEntropyLoss()
 
     def calculate(self,
                   scores: Tensor,
