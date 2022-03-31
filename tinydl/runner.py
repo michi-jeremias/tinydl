@@ -44,7 +44,6 @@ class Trainer(RunnerMediator):
 
     def train(self,
               model: torch.nn.Module) -> None:
-
         model.train()
 
         for batch_idx, (data, targets) in tqdm(enumerate(self.loader)):
@@ -99,7 +98,6 @@ class Validator(RunnerMediator):
 
     def validate(self,
                  model: torch.nn.Module) -> None:
-
         model.eval()
 
         with torch.no_grad():
@@ -166,6 +164,8 @@ class Runner(RunnerMediator):
                 all_targets = []
 
                 for data, targets in self.trainer.loader:
+                    data = data.to(self.device)
+                    targets = targets.to(self.device)
                     all_scores.append(self.model(data))
                     all_targets.append(targets)
 
@@ -185,6 +185,8 @@ class Runner(RunnerMediator):
                 all_targets = []
 
                 for data, targets in self.validator.loader:
+                    data = data.to(self.device)
+                    targets = targets.to(self.device)
                     all_scores.append(self.model(data))
                     all_targets.append(targets)
 
