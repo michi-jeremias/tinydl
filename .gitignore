@@ -9,3 +9,4 @@ build/
 dist/
 tiny_dl.egg-info/
 MANIFEST
+dataset/
