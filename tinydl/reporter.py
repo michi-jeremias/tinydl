@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
 from tinydl.metric import Metric
@@ -24,7 +25,11 @@ class Reporter(ABC):
         """Receive values from metrics and report them.
         Must be implemented in a Reporter."""
 
-    def calculate_metrics(self, stage: Stage, scores, targets, *args):
+    def calculate_metrics(self,
+                          stage: Stage,
+                          scores: Tensor,
+                          targets: Tensor,
+                          *args) -> None:
         """Triggers Metric.calculate()."""
         try:
             for metric in self._metrics:
@@ -99,13 +104,14 @@ class TensorboardScalarReporter(Reporter):
         self.step = 0
 
     def report(self):
+
         for report in self.reports:
             self.writer.add_scalar(
                 tag=report.metric_name + "_" + report.stage.name,
                 scalar_value=report.metric_value,
                 global_step=self.step
             )
-            self.step += 1
+        self.step += 1
         self.reports = []
 
 
