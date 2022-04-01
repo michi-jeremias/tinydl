@@ -1,6 +1,6 @@
 # tinydl
 
-tinydl (tiny deeplearning) is a Python library which aims to facilitate training and validation of deep learning models implemented with PyTorch.
+tinydl (tiny deeplearning) is a Python library which aims to facilitate training and validation of deep learning models implemented with PyTorch. tinydl is following semantic versioning, see https://semver.org/
 
 ## Installation
 
