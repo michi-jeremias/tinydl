@@ -8,7 +8,7 @@ setup(
     author='Michael Jeremias',
     author_email='michael.jeremias.home@gmail.com',
     url='https://github.com/michi-jeremias/tinydl',
-    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.1.2.tar.gz',
+    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.2.0.tar.gz',
     keywords=['deep', 'learning', 'pytorch', 'training'],
     install_requires=[
         'torch',
