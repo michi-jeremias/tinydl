@@ -21,8 +21,6 @@ from tinydl.runner import Runner, Trainer, Validator
 
 
 # Dataset
-# transform_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
-
 transforms = transforms.Compose(
     [
         transforms.Resize(64),
@@ -33,11 +31,11 @@ transforms = transforms.Compose(
         ),
     ]
 )
-
 dataset = datasets.MNIST(root="dataset/", train=True, transform=transforms,
                          download=True)
 train_ds, validation_ds = random_split(
     dataset, [int(0.8 * len(dataset)), ceil(0.2 * len(dataset))])
+
 
 # Loss function
 loss_fn = nn.CrossEntropyLoss()
