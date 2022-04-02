@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name='tinydl',
     packages=['tinydl'],
-    version='0.2.0',
+    version='0.3.0',
     license='MIT',
     description='Python library which facilitates training and validation of deep learning models implemented with PyTorch.',
     author='Michael Jeremias',
