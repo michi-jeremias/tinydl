@@ -22,6 +22,11 @@ class Metric(ABC):
     def __hash__(self):
         return hash(self.name)
 
+    @abstractmethod
+    def calculate(self, scores: Tensor, targets: Tensor) -> Tensor:
+        """Calculates a value from scores and targets, and returns it.
+        Must be implemented in a Metric."""
+
 
 class BinaryCrossentropy(Metric):
 
