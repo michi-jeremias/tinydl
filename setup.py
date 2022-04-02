@@ -2,13 +2,13 @@ from distutils.core import setup
 setup(
     name='tinydl',
     packages=['tinydl'],
-    version='0.3.0',
+    version='0.3.1',
     license='MIT',
     description='Python library which facilitates training and validation of deep learning models implemented with PyTorch.',
     author='Michael Jeremias',
     author_email='michael.jeremias.home@gmail.com',
     url='https://github.com/michi-jeremias/tinydl',
-    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.2.0.tar.gz',
+    download_url='https://github.com/michi-jeremias/tinydl/archive/refs/tags/v0.3.1.tar.gz',
     keywords=['deep', 'learning', 'pytorch', 'training'],
     install_requires=[
         'torch',
